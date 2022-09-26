@@ -39,7 +39,9 @@ ggplot(df_cmr, aes(x= recap, fill = species))+
 # plot general length for each occasion
 # plot length for cyprinids and catastomid 
 gghistogram(df_cmr %>% 
-              filter(species %in% c('bluehead_chub','creek_chub','striped_jumprock')),
+              filter(species %in% c('bluehead_chub',
+                                    'creek_chub',
+                                    'striped_jumprock')),
             x = "length", fill = "lightgrey", 
             xlab = "Length (mm)", ylab = "Frequency", binwidth = 5,
             facet.by = c("occasion2","species")) + 
@@ -50,7 +52,9 @@ gghistogram(df_cmr %>%
 
 # plot length for centrachids
 gghistogram(df_cmr %>% 
-              filter(species %in% c('green_sunfish','redbreast_sunfish','bluegill')),
+              filter(species %in% c('green_sunfish',
+                                    'redbreast_sunfish',
+                                    'bluegill')),
             x = "length", fill = "lightgrey", 
             xlab = "Length (mm)", ylab = "Frequency", binwidth = 5,
             facet.by = c("occasion2","species")) + 
@@ -193,7 +197,7 @@ df_t <- df0 %>%
 # Habitat data
 
 # input habitat data
-df_habitat <- read_csv("data_raw/north_campus_habitat_raw.csv") %>% 
+df_habitat <- read_csv("data_raw/data_habitat.csv") %>% 
   rename_with(.fn = str_to_lower, .cols = everything()) 
 df_habitat <- df_habitat[-c(798),]
 
