@@ -3,47 +3,41 @@
 # Occasion Sampling Summary 
 
 rm(list=ls(all.names=T))
-##'  Prepare workspace -------------------------------------------------------
 
-  # load packages
+
+# Prepare workspace -------------------------------------------------------
+
+# load packages
 pacman::p_load(tidyverse,
-                ggpubr,
-                ggplot2,
-                foreach,
-                usethis)
+               ggpubr,
+               ggplot2,
+               foreach,
+               usethis)
 
 
-##'  Gather CMR Data -------------------------------------------------------------
+# Gather CMR data ---------------------------------------------------------
 
-  # read data: master CMR 
-df_cmr <- read_csv(here::here("~/Library/Mobile Documents/com~apple~CloudDocs/Grad School/Terui Lab/CMR/cmr/data_raw/north_campus_master_corrected.csv")) %>% 
+# read data: master CMR 
+df_cmr <- read_csv(here::here("data_raw/data_cmr.csv")) %>% 
   rename_with(.fn = str_to_lower, .cols = everything()) %>% # make column titles lowercase
   select(-c(potential_error, error_corrected, comments)) %>% # remove extraneous columns
-  na.omit() # omit NA values 
+  na.omit() %>% # omit NA values 
+  mutate(occasion2 = paste0("Occ", occasion))
 
-  # check number of individuals tagged
+# check number of individuals tagged
 n_distinct(df_cmr$tag_id2)
 
-  # table showing number of recap for each occasion
+# table showing number of recap for each occasion
 ftable(df_cmr$occasion, df_cmr$species, df_cmr$recap)
 
-  # plot number of recaps over each occasion 
+# plot number of recaps over each occasion 
 ggplot(df_cmr, aes(x= recap, fill = species))+
   geom_bar() +
   theme_minimal() +
   facet_wrap(~occasion)
 
-  # create column for labeling occasion in future plots 
-df_cmr$occasion2 <- ifelse(df_cmr$occasion == 1, "Occ1", 
-                           ifelse(df_cmr$occasion == 2, "Occ2",
-                                  ifelse(df_cmr$occasion == 3, "Occ3",
-                                         ifelse(df_cmr$occasion == 4, "Occ4",
-                                                ifelse(df_cmr$occasion == 5, "Occ5",
-                                                       ifelse(df_cmr$occasion == 6, "Occ6", 
-                                                              ifelse(df_cmr$occasion ==7, "Occ7", "Occ8")))))))
-
-  # plot general length for each occasion
-    # plot length for cyprinids and catastomid 
+# plot general length for each occasion
+# plot length for cyprinids and catastomid 
 gghistogram(df_cmr[ df_cmr$species %in% c('bluehead_chub','creek_chub','striped_jumprock'), ],
             x = "length", fill = "lightgrey", 
             xlab = "Length (mm)", ylab = "Frequency", binwidth = 5,
@@ -53,7 +47,7 @@ gghistogram(df_cmr[ df_cmr$species %in% c('bluehead_chub','creek_chub','striped_
         axis.title = element_text(size = 12),
         strip.text = element_text(size = 12))
 
-   # plot length for centrachids
+# plot length for centrachids
 gghistogram(df_cmr[ df_cmr$species %in% c('green_sunfish','redbreast_sunfish','bluegill'), ],
             x = "length", fill = "lightgrey", 
             xlab = "Length (mm)", ylab = "Frequency", binwidth = 5,
@@ -64,9 +58,9 @@ gghistogram(df_cmr[ df_cmr$species %in% c('green_sunfish','redbreast_sunfish','b
         strip.text = element_text(size = 12))
 
 
-##'  Remove outliers  --------------------------------------------------------
+# Remove outliers ---------------------------------------------------------
 
-  # columns weight and length: check for outliers and remove
+# columns weight and length: check for outliers and remove
 # vector of species name
 v_sp <- unique(df_cmr$species)
 
@@ -93,10 +87,11 @@ df0 <- foreach(i = seq_len(n_distinct(df_cmr$species)),
                    # minus sign means "remove"
                    df_filter <- df_sp %>% 
                      slice(-which(fit$w < z))} 
-                  else {df_filter <- df_sp}
-                  return(df_filter)}
+                 else {df_filter <- df_sp}
+                 return(df_filter)}
 
-##'  Visualize length - weight relationship after outlier removal ------------------------------------
+
+# Visualize length - weight relationship after outlier removal ------------
 
 ggplot(df0) +
   geom_point(aes(length, weight, color = occasion2)) +
@@ -104,9 +99,9 @@ ggplot(df0) +
   facet_wrap(~species, ncol= 3, scales="free")
 
 
-##'  Format for Density ------------------------------------------------------
+# Format for density ------------------------------------------------------
 
-  #' Prepare data for merging with non-target and habitat data
+# Prepare data for merging with non-target and habitat data
 
 df0 <- df0 %>% 
   select(-time,
@@ -127,7 +122,7 @@ df_wide <- df0 %>%
               values_from = c(length, weight, julian),
               names_sort = TRUE)
 
-  # julian data - calculate interval
+# julian data - calculate interval
 df_interval <- df_wide %>% 
   select(starts_with("julian")) %>% 
   purrrlyr::by_row(lift_vl(diff),
@@ -148,7 +143,7 @@ df_interval <- df_wide %>%
            occasion_cap,
            occasion_recap)
 
-  #' non-target individuals
+#' non-target individuals
 df_nt <- read_csv(here::here("data_raw/data_non_target.csv")) %>% 
   rename_at(vars(everything()),
             .funs = str_to_lower) %>% 
@@ -174,7 +169,7 @@ df_nt <- read_csv(here::here("data_raw/data_non_target.csv")) %>%
   summarize(abundance = n()) %>% 
   ungroup()
 
-#' tagged individuals
+# tagged individuals
 df_t <- df0 %>% 
   rename_at(vars(everything()),
             .funs = str_to_lower) %>% 
@@ -185,15 +180,15 @@ df_t <- df0 %>%
   summarize(abundance = n()) %>% 
   ungroup()
 
-#' Habitat data
+# Habitat data
 
-  # input habitat data
+# input habitat data
 df_habitat <- read_csv("data_raw/north_campus_habitat_raw.csv") %>% 
   rename_with(.fn = str_to_lower, .cols = everything()) 
 df_habitat <- df_habitat[-c(798),]
 
-  # manipulate habitat data
-  # aggregate quadrats to transect #
+# manipulate habitat data
+# aggregate quadrats to transect #
 df_tr <- df_habitat %>% 
   mutate(across(starts_with("substrate"),
                 .fns = function(x) {
@@ -216,7 +211,7 @@ df_tr <- df_habitat %>%
   ungroup() %>% 
   relocate(depth, velocity, substrate) # just to show edited columns
 
-  # aggregate transects to section #
+# aggregate transects to section #
 df_sec <- df_tr %>% 
   rowwise() %>% # rowwise operation
   mutate(section_length = sum(pool_length,
@@ -236,7 +231,7 @@ df_sec <- df_tr %>%
             area_riffle = width * na.omit(riffle_length)) %>% 
   ungroup()
 
-  # undercut bank #
+# undercut bank #
 df_ucb <- df_habitat %>% 
   pivot_longer(cols = starts_with("ucb"), # select columns starting with "ucb"
                names_to = c("ucb_id", "dimension"),
@@ -264,7 +259,7 @@ df_ucb_sec <- df_ucb %>%
   group_by(occasion, section) %>% 
   summarize(area_ucb = sum(area)) # sum by section
 
-  # merge data
+# merge data
 
 df_h_sec <- df_sec %>% 
   left_join(df_ucb_sec,
@@ -311,8 +306,7 @@ df_m <- df_interval %>%
                 .fns = function(x) replace_na(x, 0)))
 
 
-
-##' Movement ----------------------------------------------------------------
+# Movement ----------------------------------------------------------------
 
 #' calculate movement between occasions
 df_move <- filter(df_cmr, !is.na(tag_id2)) %>% 
@@ -331,11 +325,11 @@ df_m <- df_m %>%
   mutate(move = (section_recap - section_cap) * 10,
          emigration = as.numeric(abs(section_recap - section_cap) > 0))
 
-  ## merge datasets - not working due to more rows after merging 
-    ### df_mp <- merge(x= df_m, y= df_move, by= c("tag", "species", "move")) ###
+## merge datasets - not working due to more rows after merging 
+### df_mp <- merge(x= df_m, y= df_move, by= c("tag", "species", "move")) ###
 
 
-  # Frequency Histogram of Cyprinid and Catastomid Movement
+# Frequency Histogram of Cyprinid and Catastomid Movement
 
 chub.move.dist <- gghistogram(df_move[df_move$species %in% c('bluehead_chub','creek_chub', 'striped_jumprock'), ], x = "move", fill = "lightgrey",
                               xlab = "Distance (m)", ylab = "Frequency", binwidth = 10, facet.by = c("interv","species")) + 
@@ -348,7 +342,7 @@ chub.move.dist <- gghistogram(df_move[df_move$species %in% c('bluehead_chub','cr
 
 chub.move.dist
 
-  # Frequency Histogram of Centrarchids Movement
+# Frequency Histogram of Centrarchids Movement
 
 sunf.move.dist <- gghistogram(df_move[df_move$species %in% c('bluegill','green_sunfish','redbreast_sunfish'), ], x = "move", fill = "lightgrey",
                               xlab = "Distance (m)", ylab = "Frequency", binwidth = 10, facet.by = c("interv","species")) + 
