@@ -38,7 +38,8 @@ ggplot(df_cmr, aes(x= recap, fill = species))+
 
 # plot general length for each occasion
 # plot length for cyprinids and catastomid 
-gghistogram(df_cmr[ df_cmr$species %in% c('bluehead_chub','creek_chub','striped_jumprock'), ],
+gghistogram(df_cmr %>% 
+              filter(species %in% c('bluehead_chub','creek_chub','striped_jumprock')),
             x = "length", fill = "lightgrey", 
             xlab = "Length (mm)", ylab = "Frequency", binwidth = 5,
             facet.by = c("occasion2","species")) + 
@@ -48,7 +49,8 @@ gghistogram(df_cmr[ df_cmr$species %in% c('bluehead_chub','creek_chub','striped_
         strip.text = element_text(size = 12))
 
 # plot length for centrachids
-gghistogram(df_cmr[ df_cmr$species %in% c('green_sunfish','redbreast_sunfish','bluegill'), ],
+gghistogram(df_cmr %>% 
+              filter(species %in% c('green_sunfish','redbreast_sunfish','bluegill')),
             x = "length", fill = "lightgrey", 
             xlab = "Length (mm)", ylab = "Frequency", binwidth = 5,
             facet.by = c("occasion2","species")) + 
@@ -86,9 +88,17 @@ df0 <- foreach(i = seq_len(n_distinct(df_cmr$species)),
                    # which(fit$w < z) returns row numbers with w < z
                    # minus sign means "remove"
                    df_filter <- df_sp %>% 
-                     slice(-which(fit$w < z))} 
-                 else {df_filter <- df_sp}
-                 return(df_filter)}
+                     slice(-which(fit$w < z))
+                   
+                   } else {
+                     
+                     df_filter <- df_sp
+                     
+                     }
+                 
+                 return(df_filter)
+                 
+                 }
 
 
 # Visualize length - weight relationship after outlier removal ------------
