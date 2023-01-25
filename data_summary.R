@@ -8,7 +8,6 @@ rm(list=ls(all.names=T))
   # load packages
 pacman::p_load(tidyverse,
                 ggpubr,
-                ggplot2,
                 foreach,
                 usethis)
 
@@ -16,13 +15,15 @@ pacman::p_load(tidyverse,
 ##'  Gather CMR Data -------------------------------------------------------------
 
   # read data: master CMR 
-df_cmr <- read_csv(here::here("~/Library/Mobile Documents/com~apple~CloudDocs/Grad School/Terui Lab/CMR/cmr/data_raw/north_campus_master_corrected.csv")) %>% 
+df_cmr <- read_csv(here::here("data_raw/north_campus_master_corrected.csv")) %>% 
   rename_with(.fn = str_to_lower, .cols = everything()) %>% # make column titles lowercase
   select(-c(potential_error, error_corrected, comments)) %>% # remove extraneous columns
   na.omit() # omit NA values 
 
   # check number of individuals tagged
 n_distinct(df_cmr$tag_id2)
+
+ftable(df_cmr$recap)
 
   # table showing number of recap for each occasion
 ftable(df_cmr$occasion, df_cmr$species, df_cmr$recap)
