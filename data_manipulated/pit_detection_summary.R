@@ -25,11 +25,6 @@ ftable(df_pit$ghost_tag)
 
 
 ##' Format Data -------------------------------------------------------------------------
-# plot raw data
-ggplot(df_pit, aes(x= ghost_tag, fill= ghost_tag)) +
-  geom_bar() +
-  geom_text(stat='count', aes(label=..count..), vjust=-.5) +
-  theme_minimal()
 
 # filter out ghost tags
 pit_fil <- df_pit %>% 
@@ -60,6 +55,11 @@ df_pit_move <- df_pit_move %>%
   na.omit()
 
 ##' Figures -----------------------------------------------------------------
+# plot raw data
+ggplot(df_pit, aes(x= ghost_tag, fill= ghost_tag)) +
+  geom_bar() +
+  geom_text(stat='count', aes(label=..count..), vjust=-.5) +
+  theme_minimal()
 
 # movement over all occasions
 plot_move <- gghistogram(df_pit_move, x = "move", fill = "darkblue",
@@ -77,6 +77,25 @@ plot_occ_move
 
 
 # Wanding vs CMR  ---------------------------------------------------------
+
+#' compare PIT wanding and CMR to assess whether ghost tags have been marked correctly 
+ 
+df_combined <- df_cmr %>% 
+  left_join(df_pit, by = "tag_id2") %>% 
+  select(-c(tag_id.x, time.x, site, mortality, fin_clip, fin_recap, time.y, tag_id.y )) %>% 
+  mutate(date.x = as.POSIXlt(date.x, format = "%m/%d/%Y"),
+         date.y = as.POSIXlt(date.y, format = "%m/%d/%Y")) %>% 
+  filter(date.x > as.POSIXlt("2022-01-01")) %>% 
+  na.omit() # had 62 NAs (need to check into this because there shouldnt be NAs)
+
+# pit wand from jan detected in feb
+# pit wand from jan, march, aril detected in may
+
+df_change <- df_combined %>% 
+  mutate(date_subtracted = date.x - date.y)
+
+
+
 
 
 

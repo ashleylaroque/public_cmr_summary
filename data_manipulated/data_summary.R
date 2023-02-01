@@ -17,7 +17,7 @@ pacman::p_load(tidyverse,
   # read data: master CMR 
 df_cmr <- read_csv(here::here("data_raw/north_campus_master_corrected.csv")) %>% 
   rename_with(.fn = str_to_lower, .cols = everything()) %>% # make column titles lowercase
-  select(-c(potential_error, error_corrected, comments)) %>% # remove extraneous columns
+  select(-c( error_corrected, comments)) %>% # remove extraneous columns
   na.omit() # omit NA values 
 
   # check number of individuals tagged
