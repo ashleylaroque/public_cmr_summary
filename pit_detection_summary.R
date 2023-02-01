@@ -76,5 +76,8 @@ plot_occ_move <- gghistogram(df_pit_move, x = "move", fill = "darkblue",
 plot_occ_move
 
 
+# Wanding vs CMR  ---------------------------------------------------------
+
+
 
 
