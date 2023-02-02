@@ -2,48 +2,38 @@
 # Ashley LaRoque
 # PIT Detecction Summary
 
+# setup -------------------------------------------------------------------
 
-rm(list=ls(all.names=T))
-##' Prepare workspace -------------------------------------------------------
-
-# load packages
-pacman::p_load(tidyverse,
-               ggpubr,
-               ggplot2)
+rm(list=ls())
+source(here::here("code/library.R"))
 
 
-##' Gather Data -------------------------------------------------------------
+# read data ---------------------------------------------------------------
+
 # read data: master PIT detection
 df_pit <- read_csv(here::here("data_raw/pit_wand_master.csv")) %>% 
-  na.omit() # omit NA values 
+  drop_na(tag_id2) %>% 
+  dplyr::select(-tag_id) %>% 
+  mutate(f_occasion = paste0("occ", occasion)) %>% 
+  rename(tag = tag_id2)
 
 # check number of individuals tagged
-n_distinct(df_pit$tag_id2)
+n_distinct(df_pit$tag)
 
 ftable(df_pit$ghost_tag)
 
+## check below later
 
-
-##' Format Data -------------------------------------------------------------------------
+# format data -------------------------------------------------------------
 
 # filter out ghost tags
 pit_fil <- df_pit %>% 
   filter(ghost_tag == "No")
-n_distinct(pit_fil$tag_id2)
   
-# create column for labeling occasion in future plots 
-pit_fil$occasion2 <- ifelse(pit_fil$occasion == 1, "Occ1", 
-                           ifelse(pit_fil$occasion == 2, "Occ2",
-                                  ifelse(pit_fil$occasion == 3, "Occ3",
-                                         ifelse(pit_fil$occasion == 4, "Occ4", 
-                                                ifelse(pit_fil$occasion == 5, "Occ5",
-                                                       ifelse(pit_fil$occasion == 6, "Occ6",
-                                                              ifelse(pit_fil$occasion == 7, "Occ7","Occ8")))))))
-
-df_pit_move <- filter(pit_fil, !is.na(tag_id2)) %>% 
-  distinct(occasion2, tag_id2, .keep_all = TRUE) %>%
-  select(occasion2, tag_id2, section) %>%
-  spread(occasion2, section) %>% 
+df_pit_move <- pit_fil %>% 
+  distinct(f_occasion, tag, .keep_all = TRUE) %>%
+  select(f_occasion, tag_id2, section) %>%
+  spread(f_occasion, section) %>% 
   rename(tag = tag_id2)
 
 df_pit_move <- df_pit_move %>%
