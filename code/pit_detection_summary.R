@@ -6,7 +6,7 @@
 
 rm(list=ls())
 source(here::here("code/library.R"))
-
+source(here::here("code/data_summary.R"))
 
 # read data ---------------------------------------------------------------
 
@@ -15,78 +15,73 @@ df_pit <- read_csv(here::here("data_raw/pit_wand_master.csv")) %>%
   drop_na(tag_id2) %>% 
   dplyr::select(-tag_id) %>% 
   mutate(f_occasion = paste0("occ", occasion)) %>% 
-  rename(tag = tag_id2)
+  rename(tag = tag_id2) %>% 
+  filter(tag != "ID989.002009085551") # dummy tag
 
 # check number of individuals tagged
-n_distinct(df_pit$tag)
-
+skimr::skim(df_pit)
 ftable(df_pit$ghost_tag)
 
-## check below later
 
 # format data -------------------------------------------------------------
 
-# filter out ghost tags
-pit_fil <- df_pit %>% 
-  filter(ghost_tag == "No")
-  
-df_pit_move <- pit_fil %>% 
-  distinct(f_occasion, tag, .keep_all = TRUE) %>%
-  select(f_occasion, tag_id2, section) %>%
-  spread(f_occasion, section) %>% 
-  rename(tag = tag_id2)
+## format for pit wanding data
+### remove duplicates within each occasion
+df_pit_unique <- df_pit %>% 
+  group_by(f_occasion,
+           tag) %>% 
+  slice(which.max(section)) %>% 
+  ungroup()
 
-df_pit_move <- df_pit_move %>%
-  mutate(Mv12 = Occ2 - Occ1, Mv23 = Occ3 - Occ2, Mv34 = Occ4 - Occ3, Mv45 = Occ5 - Occ4, 
-         Mv56 = Occ6 - Occ5, Mv67 = Occ7 - Occ6, Mv78 = Occ8 - Occ7) %>%
-  select(tag, Mv12:Mv78) %>%
-  gather(interv, move, Mv12:Mv78, factor_key = TRUE) %>%
-  mutate(move = move * 10) %>% # section = 10m
-  na.omit()
+### make sure unique observation per occasion & tag ID
+df_pit_unique %>% 
+  group_by(f_occasion,
+           tag) %>% 
+  tally() %>% 
+  pull(n) %>% 
+  unique()
 
-##' Figures -----------------------------------------------------------------
-# plot raw data
-ggplot(df_pit, aes(x= ghost_tag, fill= ghost_tag)) +
-  geom_bar() +
-  geom_text(stat='count', aes(label=..count..), vjust=-.5) +
-  theme_minimal()
+## format for cmr data
+### remove duplicates within each occasion
+df_cmr_unique <- df_cmr %>%
+  rename(tag = tag_id2) %>% 
+  group_by(f_occasion, tag) %>% 
+  slice(which.max(section)) %>% 
+  ungroup()
 
-# movement over all occasions
-plot_move <- gghistogram(df_pit_move, x = "move", fill = "darkblue",
-                         xlab = "Distance (m)", ylab = "Frequency", 
-                         binwidth = 10) + 
-  geom_vline(xintercept = 0, linetype="dashed", color = "red", size=0.9)
-plot_move
+### make sure unique observation per occasion & tag ID
+df_cmr_unique %>% 
+  group_by(f_occasion,
+           tag) %>% 
+  tally() %>% 
+  pull(n) %>% 
+  unique()
 
-# movement between occasions
-plot_occ_move <- gghistogram(df_pit_move, x = "move", fill = "darkblue",
-                         xlab = "Distance (m)", ylab = "Frequency", 
-                         binwidth = 10, facet.by = "interv") + 
-  geom_vline(xintercept = 0, linetype="dashed", color = "red", size=0.9)
-plot_occ_move
+### pick 2022 data
+df_cmr22 <- df_cmr_unique %>% 
+  mutate(date = as.Date(date, "%m/%d/%Y")) %>% 
+  filter(between(date,
+                 as.Date("2022-01-01"),
+                 as.Date("2022-12-31")))
 
 
 # Wanding vs CMR  ---------------------------------------------------------
 
+## work on this part
+
 #' compare PIT wanding and CMR to assess whether ghost tags have been marked correctly 
- 
-df_combined <- df_cmr %>% 
-  left_join(df_pit, by = "tag_id2") %>% 
-  select(-c(tag_id.x, time.x, site, mortality, fin_clip, fin_recap, time.y, tag_id.y )) %>% 
+
+df_combined <- df_cmr %>%
+  rename(tag = tag_id2) %>%
+  left_join(df_pit, by = c("tag")) %>%
+  select(-c(tag_id.x, time.x, site, mortality, fin_clip, fin_recap, time.y, tag_id.y )) %>%
   mutate(date.x = as.POSIXlt(date.x, format = "%m/%d/%Y"),
-         date.y = as.POSIXlt(date.y, format = "%m/%d/%Y")) %>% 
-  filter(date.x > as.POSIXlt("2022-01-01")) %>% 
+         date.y = as.POSIXlt(date.y, format = "%m/%d/%Y")) %>%
+  filter(date.x > as.POSIXlt("2022-01-01")) %>%
   na.omit() # had 62 NAs (need to check into this because there shouldnt be NAs)
 
 # pit wand from jan detected in feb
 # pit wand from jan, march, aril detected in may
 
-df_change <- df_combined %>% 
+df_change <- df_combined %>%
   mutate(date_subtracted = date.x - date.y)
-
-
-
-
-
-
-
