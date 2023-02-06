@@ -68,6 +68,10 @@ df_cmr22 <- df_cmr_unique %>%
 # Wanding vs CMR  ---------------------------------------------------------
 
 ## work on this part
+## 1 keep individuals common across two data sources (cmr & pit)
+## 2 filter pit wanding date by common tag id
+## 3 remove occasion from df_pit
+## 4 bind_rows
 
 #' compare PIT wanding and CMR to assess whether ghost tags have been marked correctly 
 
