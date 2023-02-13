@@ -16,7 +16,8 @@ df_pit <- read_csv(here::here("data_raw/pit_wand_master.csv")) %>%
   dplyr::select(-tag_id) %>% 
   mutate(f_occasion = paste0("occ", occasion)) %>% 
   rename(tag = tag_id2) %>% 
-  filter(tag != "ID989.002009085551") # dummy tag
+  filter(tag != "ID989.002009085551") %>%  # dummy tag
+  dplyr::select(-occasion)
 
 # check number of individuals tagged
 skimr::skim(df_pit)
@@ -28,6 +29,7 @@ ftable(df_pit$ghost_tag)
 ## format for pit wanding data
 ### remove duplicates within each occasion
 df_pit_unique <- df_pit %>% 
+  mutate(date = as.Date(date, "%m/%d/%Y")) %>% 
   group_by(f_occasion,
            tag) %>% 
   slice(which.max(section)) %>% 
@@ -62,30 +64,23 @@ df_cmr22 <- df_cmr_unique %>%
   mutate(date = as.Date(date, "%m/%d/%Y")) %>% 
   filter(between(date,
                  as.Date("2022-01-01"),
-                 as.Date("2022-12-31")))
+                 as.Date("2022-12-31"))) %>% 
+  dplyr::select(-occasion)
 
 
 # Wanding vs CMR  ---------------------------------------------------------
 
-## work on this part
-## 1 keep individuals common across two data sources (cmr & pit)
-## 2 filter pit wanding date by common tag id
-## 3 remove occasion from df_pit
-## 4 bind_rows
+tag_common <- intersect(df_pit_unique$tag, df_cmr22$tag)
 
-#' compare PIT wanding and CMR to assess whether ghost tags have been marked correctly 
+df_common_tags <- df_pit_unique %>% 
+  filter(tag %in% tag_common)
 
-df_combined <- df_cmr %>%
-  rename(tag = tag_id2) %>%
-  left_join(df_pit, by = c("tag")) %>%
-  select(-c(tag_id.x, time.x, site, mortality, fin_clip, fin_recap, time.y, tag_id.y )) %>%
-  mutate(date.x = as.POSIXlt(date.x, format = "%m/%d/%Y"),
-         date.y = as.POSIXlt(date.y, format = "%m/%d/%Y")) %>%
-  filter(date.x > as.POSIXlt("2022-01-01")) %>%
-  na.omit() # had 62 NAs (need to check into this because there shouldnt be NAs)
+df_bound <- df_common_tags %>% 
+  left_join(df_cmr22, by = "tag") %>% 
+  dplyr::select(-c(time.x, tag_id, site, time.y, mortality, fin_clip, fin_recap, ...16))
+  
 
-# pit wand from jan detected in feb
-# pit wand from jan, march, aril detected in may
+trial <- bind_rows(df_common_tags, df_cmr22)
 
-df_change <- df_combined %>%
-  mutate(date_subtracted = date.x - date.y)
+
+

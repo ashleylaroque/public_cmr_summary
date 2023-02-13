@@ -14,7 +14,7 @@ source(here::here("code/library.R"))
 df_cmr <- read_csv(here::here("data_raw/north_campus_master_corrected.csv")) %>% 
   rename_with(.fn = str_to_lower,
               .cols = everything()) %>% # make column titles lowercase
-  select(-c(error_corrected, comments)) %>% # remove extraneous columns
+  dplyr::select(-c(error_corrected, comments)) %>% # remove extraneous columns
   drop_na(tag_id2) %>% #omit NA values in tagid
   mutate(f_occasion = paste0("occ", occasion))
 
