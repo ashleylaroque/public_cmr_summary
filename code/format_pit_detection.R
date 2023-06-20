@@ -1,14 +1,14 @@
 # R version 4.1.3 
 # Ashley LaRoque
-# PIT Detecction Summary
+# PIT Detection Summary
 
-# setup -------------------------------------------------------------------
+# Setup -------------------------------------------------------------------
 
 rm(list=ls())
 source(here::here("code/library.R"))
-source(here::here("code/data_summary.R"))
+source(here::here("code/format_cmr_data.R"))
 
-# read data ---------------------------------------------------------------
+# Read data ---------------------------------------------------------------
 
 # read data: master PIT detection
 df_pit <- read_csv(here::here("data_raw/pit_wand_master.csv")) %>% 
@@ -24,7 +24,7 @@ skimr::skim(df_pit)
 ftable(df_pit$ghost_tag)
 
 
-# format data -------------------------------------------------------------
+# Format data -------------------------------------------------------------
 
 ## format for pit wanding data
 ### remove duplicates within each occasion
@@ -80,7 +80,10 @@ df_bound <- df_common_tags %>%
   dplyr::select(-c(time.x, tag_id, site, time.y, mortality, fin_clip, fin_recap, ...16))
   
 
-trial <- bind_rows(df_common_tags, df_cmr22)
+## additionally filter because fish could be picked up 
+
+## common tags from cmr and extract latest occasion then left join with pit tag unique to compare dates 
+## filter out unsure rows 
 
 
 
