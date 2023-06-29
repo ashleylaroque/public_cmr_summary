@@ -63,10 +63,50 @@ df_m2 <- arrange(transform(df_m,
                            species=factor(species,levels=fish_order)),species)
 
 ## plot movement across all occasions
-all_movement <- gghistogram(df_m2 [df_m2$species %in% c('bluehead_chub','creek_chub', 'striped_jumprock',
-                                                        'green_sunfish','redbreast_sunfish', 'bluegill'), ], x = "move", fill = "dodgerblue",
-                            xlab = "Distance (m)", ylab = "Frequency", binwidth = 10) +
+
+all_movement <- gghistogram(df_occ_move, x= "move", fill = "dodgerblue",
+            xlab = "Distance (m)", ylab = "Frequency", binwidth = 10) +
   geom_vline(xintercept = 0, linetype="dashed", color = "red", size=0.9) +
-  facet_wrap(species ~ ., factor(levels= fish_order), labeller = as_labeller(fish_labs))
+  facet_wrap(species ~ ., factor(levels= fish_order), labeller = as_labeller(fish_labs))+
+  theme(axis.text.x = element_text(angle = 45, vjust = .5))
 all_movement
+
+ftable(df_cmr$recap)
+ggplot(df_cmr, aes(x= recap, fill = species))+
+  geom_bar() +
+  theme_minimal()
+
+
+# Plot emigration ~ density 
+df_plot %>% 
+  ggplot(aes(x = density,
+             y = emigration, color= species)) +
+  geom_point(alpha = 0.2) +
+  facet_grid(rows = vars(species),
+             cols = vars(opponent)) +
+  ylim(0, 1.4) +
+  geom_smooth(method = "glm", 
+              method.args = list(family = "binomial"), se=F) +
+  scale_color_manual(values=c("darkcyan", "maroon", "mediumpurple1", "royalblue4", "palegreen4", "steelblue3"), 
+                     name="Species") +
+  labs(x= "Density", y= "Emigration") +
+  theme(legend.position = "none")   
+
+
+
+# Plot emigration ~ length
+df_plot %>% 
+  ggplot(aes(x = length_cap,
+             y = emigration, color= species)) +
+  geom_point(alpha = 0.2) +
+  facet_wrap(facets = ~ species) +
+  ylim(0, 1.2) +
+  geom_smooth(method = "glm", 
+              method.args = list(family = "binomial"), se=F) +
+  scale_color_manual(values=c("darkcyan", "maroon", "mediumpurple1", "royalblue4", "palegreen4", "steelblue3"), 
+                     name="Species") +
+  labs(x= "Length at Capture", y= "Emigration") +
+  theme(legend.position = "none")+
+  theme(text = element_text(size = 20)) 
+
 
