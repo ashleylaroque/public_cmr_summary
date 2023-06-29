@@ -60,18 +60,17 @@ df0 <- foreach(i = seq_len(n_distinct(df_cmr$species)),
 ggplot(df0) +
   geom_point(aes(length, weight, color = f_occasion)) +
   theme_minimal() +
-  facet_wrap(~species, ncol= 3, scales="free")
-
-
-
+  facet_wrap(~species, ncol= 3, scales="free") +
+  scale_x_continuous(trans = "log10") +
+  scale_y_continuous(trans = "log10")
+  
 
 # Format Habitat -----------------------------------------------------------------
 
 ## input habitat data
 df_habitat <- read_csv("data_raw/north_campus_habitat_raw.csv") %>%
-  rename_with(.fn = str_to_lower, .cols = everything())
-
-df_habitat <- df_habitat[-c(797),]  # velocity cells hava NA
+  rename_with(.fn = str_to_lower, .cols = everything()) %>% 
+  drop_na(velocity1, velocity2, velocity3)  # velocity cells hava NA
 
 ## manipulate habitat data
 ## aggregate quadrats to transect
@@ -98,19 +97,20 @@ df_tr <- df_habitat %>%
   relocate(depth, velocity, substrate) # just to show edited columns
 
 ## aggregate transects to section
+## 6/20/23 note: deepest depth lacks after occasion 7 - check
 df_sec <- df_tr %>%
   rowwise() %>% # rowwise operation
   mutate(section_length = sum(pool_length,
                               riffle_length,
                               run_length)) %>% # sum pool, riffle, run length for each row
   ungroup() %>%
-  group_by(occasion, section) %>% # mean or remove NAs by occation and section
+  group_by(occasion, section) %>% # mean or remove NAs by occasion and section
   summarize(width = mean(width),
             section_length = na.omit(section_length),
             depth_mean = mean(depth),
             velocity_mean = mean(velocity),
             substrate_mean = mean(substrate),
-            depth_max = na.omit(deepest_depth),
+            #depth_max = na.omit(deepest_depth),
             area = width * section_length,
             area_pool = width * na.omit(pool_length),
             area_run = width * na.omit(run_length),
@@ -123,11 +123,11 @@ df_ucb <- df_habitat %>%
                names_to = c("ucb_id", "dimension"),
                values_to = "value",
                names_sep = "_") %>% # split ucb columns into "ucb_id" and "dimension" by "_"
-  select(occasion,
-         section,
-         ucb_id,
-         dimension,
-         value) %>%
+  dplyr::select(occasion,
+                section,
+                ucb_id,
+                dimension,
+                value) %>%
   mutate(dimension = case_when(dimension == "len" ~ "length",
                                str_detect(dimension, "dep") ~ "depth")) %>%  # change "dimensions" column elements
   drop_na(value) %>% # drop NAs in "value" column
@@ -148,19 +148,19 @@ df_ucb_sec <- df_ucb %>%
 ## merge data
 df_h_sec <- df_sec %>%
   left_join(df_ucb_sec,
-            by = c("occasion", "section"))
-
+            by = c("occasion", "section")) %>% 
+  mutate(area_ucb = replace_na(area_ucb, 0)) # replace NA with zero
 
 
 # Format for Density ------------------------------------------------------
 
 ## prepare data for merging with non-target and habitat data
 df0 <- df0 %>% 
-  select(-c(time,
-            tag_id,
-            recap,
-            mortality,
-            site)) %>% # remove unnecessary columns
+  dplyr::select(-c(time,
+                   tag_id,
+                   recap,
+                   mortality,
+                   site)) %>% # remove unnecessary columns
   rename(tag = tag_id2) %>%  # change column name
   mutate(date = as.Date(date, format = "%m/%d/%Y"), # data type change: date column
          julian = julian(date)) %>% # julian date
@@ -222,7 +222,7 @@ df_nt <- read_csv(here::here("data_raw/data_non_target.csv")) %>%
   ungroup()
 
 ## tagged individuals
-df_t <- df0 %>% 
+df_t <- df_cmr %>% 
   rename_at(vars(everything()),
             .funs = str_to_lower) %>% 
   drop_na(species) %>% 
@@ -272,81 +272,81 @@ df_m <- df_interval %>%
                 .fns = function(x) replace_na(x, 0)))
 
 # Format Movement ----------------------------------------------------------------
-
-## tagged fish abundance
-df_abundance <- df_cmr %>% 
-  group_by(occasion, section, species) %>% 
-  summarize(abundance = n())
-
-## fish abundance combined with habitat means 
-df_abund_comb <- df_abundance %>%
-  group_by(occasion, section) %>%
-  pivot_wider(names_from = species, values_from = abundance, values_fill = 0) %>% # section-wdie format and fill 0 value
-  arrange(occasion, section) %>%
-  right_join(df_h_sec, by = c("occasion" ,"section")) %>% 
-  mutate(redbreast_sunfish = ifelse(is.na(redbreast_sunfish), 0, redbreast_sunfish), # replace NA to 0
-         bluegill = ifelse(is.na(bluegill), 0, bluegill), # replace NA to 0
-         green_sunfish = ifelse(is.na(green_sunfish), 0, green_sunfish), # replace NA to 0
-         bluehead_chub = ifelse(is.na(bluehead_chub), 0, bluehead_chub), # replace NA to 0
-         creek_chub = ifelse(is.na(creek_chub), 0, creek_chub))# replace NA to 0
-
-# calculate movement between consecutive recaptures in long format
-df_total_move <- df_m %>%
-  mutate(move = (section_recap - section_cap) * 10,
-         emigration = as.numeric(abs(section_recap - section_cap) > 0))
-
-# calculate movement between occasions in wide format
-df_move <- filter(df_cmr, !is.na(tag_id2)) %>%
-  distinct(f_occasion, tag_id2, .keep_all = TRUE) %>%
-  select(f_occasion, tag_id2, section, species) %>%
-  spread(f_occasion, section) %>%
-  rename(tag = tag_id2)
-
-df_occ_move <- df_move %>%
-  mutate(Mv12 = occ2 - occ1, Mv23 = occ3 - occ2, Mv34 = occ4 - occ3, Mv45 = occ5 - occ4, Mv56 = occ6 - occ5, 
-         Mv67 = occ7 - occ6, Mv78 = occ8 - occ7, Mv89 = occ9 - occ8, Mv910 = occ10 - occ9, Mv1011 = occ11 - occ10) %>%
-  select(tag, species, Mv12:Mv1011) %>%
-  gather(interv, move, Mv12:Mv1011, factor_key = TRUE) %>%
-  mutate(move = move * 10) %>% # section = 10m
-  na.omit()
+# 
+# ## tagged fish abundance
+# df_abundance <- df_cmr %>% 
+#   group_by(occasion, section, species) %>% 
+#   summarize(abundance = n())
+# 
+# ## fish abundance combined with habitat means 
+# df_abund_comb <- df_abundance %>%
+#   group_by(occasion, section) %>%
+#   pivot_wider(names_from = species, values_from = abundance, values_fill = 0) %>% # section-wdie format and fill 0 value
+#   arrange(occasion, section) %>%
+#   right_join(df_h_sec, by = c("occasion" ,"section")) %>% 
+#   mutate(redbreast_sunfish = ifelse(is.na(redbreast_sunfish), 0, redbreast_sunfish), # replace NA to 0
+#          bluegill = ifelse(is.na(bluegill), 0, bluegill), # replace NA to 0
+#          green_sunfish = ifelse(is.na(green_sunfish), 0, green_sunfish), # replace NA to 0
+#          bluehead_chub = ifelse(is.na(bluehead_chub), 0, bluehead_chub), # replace NA to 0
+#          creek_chub = ifelse(is.na(creek_chub), 0, creek_chub))# replace NA to 0
+# 
+# # calculate movement between consecutive recaptures in long format
+# df_total_move <- df_m %>%
+#   mutate(move = (section_recap - section_cap) * 10,
+#          emigration = as.numeric(abs(section_recap - section_cap) > 0))
+# 
+# # calculate movement between occasions in wide format
+# df_move <- filter(df_cmr, !is.na(tag_id2)) %>%
+#   distinct(f_occasion, tag_id2, .keep_all = TRUE) %>%
+#   select(f_occasion, tag_id2, section, species) %>%
+#   spread(f_occasion, section) %>%
+#   rename(tag = tag_id2)
+# 
+# df_occ_move <- df_move %>%
+#   mutate(Mv12 = occ2 - occ1, Mv23 = occ3 - occ2, Mv34 = occ4 - occ3, Mv45 = occ5 - occ4, Mv56 = occ6 - occ5, 
+#          Mv67 = occ7 - occ6, Mv78 = occ8 - occ7, Mv89 = occ9 - occ8, Mv910 = occ10 - occ9, Mv1011 = occ11 - occ10) %>%
+#   select(tag, species, Mv12:Mv1011) %>%
+#   gather(interv, move, Mv12:Mv1011, factor_key = TRUE) %>%
+#   mutate(move = move * 10) %>% # section = 10m
+#   na.omit()
 
 
 # GLM ---------------------------------------------------------------------
-
-df_m_ab <- df_m %>% 
-  mutate(move = abs(section_recap - section_cap) * 10,
-         emigration = as.numeric(abs(section_recap - section_cap) > 0))
-
-f_species <- c("green_sunfish",
-               "redbreast_sunfish",
-               "creek_chub",
-               "bluehead_chub",
-               "striped_jumprock",
-               "bluegill")
-
-df_plot <- df_m_ab %>% 
-  pivot_longer(cols = starts_with("d_"),
-               values_to = "density",
-               names_to = "opponent") %>% 
-  filter(opponent %in% paste0("d_", f_species))
-
-# GLM
-list_m <- lapply(1:length(f_species), function(i) {
-  
-  glm(emigration ~ 
-        scale(length_cap) + 
-        scale(d_creek_chub) +
-        scale(d_bluehead_chub) +
-        scale(d_green_sunfish) +
-        scale(d_redbreast_sunfish)+
-        scale(d_striped_jumprock),
-      family = "binomial",
-      data = filter(df_m_ab, species == f_species[i]))
-  
-})
-
-names(list_m) <- f_species
-lapply(list_m, summary)
-
-
-
+# 
+# df_m_ab <- df_m %>% 
+#   mutate(move = abs(section_recap - section_cap) * 10,
+#          emigration = as.numeric(abs(section_recap - section_cap) > 0))
+# 
+# f_species <- c("green_sunfish",
+#                "redbreast_sunfish",
+#                "creek_chub",
+#                "bluehead_chub",
+#                "striped_jumprock",
+#                "bluegill")
+# 
+# df_plot <- df_m_ab %>% 
+#   pivot_longer(cols = starts_with("d_"),
+#                values_to = "density",
+#                names_to = "opponent") %>% 
+#   filter(opponent %in% paste0("d_", f_species))
+# 
+# # GLM
+# list_m <- lapply(1:length(f_species), function(i) {
+#   
+#   glm(emigration ~ 
+#         scale(length_cap) + 
+#         scale(d_creek_chub) +
+#         scale(d_bluehead_chub) +
+#         scale(d_green_sunfish) +
+#         scale(d_redbreast_sunfish)+
+#         scale(d_striped_jumprock),
+#       family = "binomial",
+#       data = filter(df_m_ab, species == f_species[i]))
+#   
+# })
+# 
+# names(list_m) <- f_species
+# lapply(list_m, summary)
+# 
+# 
+# 
