@@ -244,13 +244,15 @@ df_density <- df_h_sec %>%
                  na.rm = TRUE),
          d = n / area) %>% # density = d
   select(-abundance.x,
-         -abundance.y) %>%
+         -abundance.y) %>% 
+  arrange(occasion, section)
+
+df_density_wide <- df_density %>% 
   pivot_wider(id_cols = c(occasion, section),
               names_from = species,
               values_from = d,
               values_fill = 0,
               names_prefix = "d_") %>%
-  arrange(occasion, section) %>%
   select(occasion:d_striped_jumprock)
 
 # merge all density data
@@ -265,7 +267,7 @@ df_m <- df_interval %>%
             by = c("tag",
                    "species",
                    "occasion_recap" = "occasion")) %>%
-  left_join(df_density,
+  left_join(df_density_wide,
             by = c("occasion_cap" = "occasion",
                    "section_cap" = "section")) %>%
   mutate(across(starts_with("d_"),
@@ -290,10 +292,7 @@ df_m <- df_interval %>%
 #          bluehead_chub = ifelse(is.na(bluehead_chub), 0, bluehead_chub), # replace NA to 0
 #          creek_chub = ifelse(is.na(creek_chub), 0, creek_chub))# replace NA to 0
 # 
-# # calculate movement between consecutive recaptures in long format
-# df_total_move <- df_m %>%
-#   mutate(move = (section_recap - section_cap) * 10,
-#          emigration = as.numeric(abs(section_recap - section_cap) > 0))
+
 # 
 # # calculate movement between occasions in wide format
 # df_move <- filter(df_cmr, !is.na(tag_id2)) %>%
@@ -310,13 +309,36 @@ df_m <- df_interval %>%
 #   mutate(move = move * 10) %>% # section = 10m
 #   na.omit()
 
+## format for 'figure_movement'
+ df_m_ab <- df_m %>% 
+   mutate(move = abs(section_recap - section_cap) * 10,
+          emigration = as.numeric(abs(section_recap - section_cap) > 0))
 
-# GLM ---------------------------------------------------------------------
-# 
-# df_m_ab <- df_m %>% 
-#   mutate(move = abs(section_recap - section_cap) * 10,
-#          emigration = as.numeric(abs(section_recap - section_cap) > 0))
-# 
+df_move <- df_interval %>%
+  left_join(df0,
+            by = c("tag",
+                   "species",
+                   "occasion_cap" = "occasion")) %>%
+  left_join(df0,
+            suffix = c("_cap", "_recap"),
+            by = c("tag",
+                   "species",
+                   "occasion_recap" = "occasion")) %>%
+  left_join(df_density,
+            by = c("occasion_cap" = "occasion",
+                   "section_cap" = "section"),
+                   "species") %>% 
+  rename("d_species" = "species.y") %>% 
+  mutate(move = abs(section_recap - section_cap) * 10,
+         emigration = as.numeric(abs(section_recap - section_cap) > 0),
+         size_ratio = length_cap / weight_cap) # mm per unit g 
+
+df_z <- df_move %>% 
+  pivot_longer(cols = width:area_ucb, 
+               names_to = "habitat_variable", 
+               values_to = "value")
+
+
 # f_species <- c("green_sunfish",
 #                "redbreast_sunfish",
 #                "creek_chub",
