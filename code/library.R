@@ -3,3 +3,6 @@ pacman::p_load(tidyverse,
                foreach,
                usethis,
                PerformanceAnalytics)
+
+
+# control + shift + C to comment out multiple lines 
