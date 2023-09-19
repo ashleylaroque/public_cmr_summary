@@ -32,16 +32,27 @@ df_cmr <- read_csv(here::here("data_raw/north_campus_master_corrected.csv")) %>%
 skimr::skim(df_cmr)
 
 # check recurring tags have matching species
-      # tags that appear multiple times make sure the species ID matches
-ex <- df_cmr %>% 
-  select(c(occasion, tag, species)) %>% 
-  group_by(tag, species) %>% 
-  mutate(num_dups = n(), # number of duplicates
-         dup_id = row_number()) %>% #tells you which duplicate number that particular row is (e.g. 1st, 2nd, or 3rd, etc)
-  ungroup() %>% 
-  mutate(is_duplicated = dup_id > 1) %>%  # is the tag a duplicate F or T
-  group_by(species ) %>% 
-  summarise(same = _distinct(str_extract()))
+# tags that appear multiple times make sure the species ID matches
+error_id <- df_cmr %>% 
+  group_by(tag) %>% 
+  summarize(n_species = n_distinct(species)) %>% 
+  filter(n_species > 1) %>% 
+  pull(tag)
+
+df_cmr %>% 
+  filter(tag %in% error_id) %>% 
+  arrange(tag) %>% 
+  view()
+
+# ex <- df_cmr %>% 
+#   select(c(occasion, tag, species)) %>% 
+#   group_by(tag, species) %>% 
+#   mutate(num_dups = n(), # number of duplicates
+#          dup_id = row_number()) %>% #tells you which duplicate number that particular row is (e.g. 1st, 2nd, or 3rd, etc)
+#   ungroup() %>% 
+#   mutate(is_duplicated = dup_id > 1) %>%  # is the tag a duplicate F or T
+#   group_by(species ) %>% 
+#   summarise(same = _distinct(str_extract()))
 
 # check length / weight relationship (visual)
 ggplot(df_cmr, aes(x = length , y = weight, color = f_occasion)) +
