@@ -57,7 +57,9 @@ df_cmr %>%
 # check length / weight relationship (visual)
 ggplot(df_cmr, aes(x = length , y = weight, color = f_occasion)) +
   geom_point()+
-  facet_wrap(~species)
+  facet_wrap(~species) +
+  scale_x_continuous(trans = "log10") +
+  scale_y_continuous(trans = "log10")
 
 #select points of interest to double check
 attach(df_cmr)
@@ -87,28 +89,34 @@ df0 <- foreach(i = seq_len(n_distinct(df_cmr$species)),
                  # fit robust linear model
                  # robust linear model returns "weight" value for each data point
                  # based on deviation from the general trend (RLM)
-                 fit <- MASS::rlm(log(weight) ~ log(length),
+                 fit <- MASS::rlm(log(weight) ~ log(length) + f_occasion,
                                   df_sp)
                  
-                 if (any(fit$w < z)) {
-                   # remove entries with weight < z
-                   # which(fit$w < z) returns row numbers with w < z
-                   # minus sign means "remove"
-                   df_filter <- df_sp %>% 
-                     slice(-which(fit$w < z))
-                 } else {
-                   df_filter <- df_sp
-                 }
+                 cout <- df_sp %>% 
+                   mutate(w = fit$w)
                  
-                 return(df_filter)
+                 # if (any(fit$w < z)) {
+                 #   # remove entries with weight < z
+                 #   # which(fit$w < z) returns row numbers with w < z
+                 #   # minus sign means "remove"
+                 #   df_filter <- df_sp %>% 
+                 #     slice(-which(fit$w < z))
+                 # } else {
+                 #   df_filter <- df_sp
+                 # }
+                 
+                 return(cout)
                }
-## select what rows are irrelgular
-df_sp[fit$w < .3, ]
+# ## select what rows are irrelgular
+# df_sp[fit$w < .3, ]
 
+df0 <- mutate(df0, col = ifelse(w < 0.3, "yes", "no"))
 
 ## visualize after outlier removal
 ggplot(df0) +
-  geom_point(aes(x = length, y = weight, color = f_occasion)) +
+  geom_point(aes(x = length,
+                 y = weight,
+                 color = col)) +
   theme_minimal() +
   facet_wrap(~species, ncol= 3, scales="free") +
   scale_x_continuous(trans = "log10") +
