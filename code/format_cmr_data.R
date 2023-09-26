@@ -43,21 +43,12 @@ df_cmr %>%
   arrange(tag) %>% 
   view()
 
-
 # check length / weight relationship (visual)
 ggplot(df_cmr, aes(x = length , y = weight, color = f_occasion)) +
   geom_point()+
   facet_wrap(~species) +
   scale_x_continuous(trans = "log10") +
   scale_y_continuous(trans = "log10")
-
-#select points of interest to double check
-attach(df_cmr)
-plot(length, weight)
-identify(x, y, labels=row.names(mydata)) # identify points
-coords <- locator(type="l") # add lines
-coords # display list =  3 found and corrected via photos 
-
 
 # Remove Outliers ---------------------------------------------------------
 
@@ -101,6 +92,7 @@ df0 <- foreach(i = seq_len(n_distinct(df_cmr$species)),
 # df_sp[fit$w < .3, ]
 
 df0 <- mutate(df0, col = ifelse(w < 0.3, "yes", "no"))
+write_csv(df0, "outlier_correction.csv")
 
 ## visualize after outlier removal
 ggplot(df0) +

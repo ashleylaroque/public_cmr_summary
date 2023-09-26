@@ -12,11 +12,11 @@ source(here::here("code/format_pit_detection.R"))
 
 # Correlation plot fish and habitat  
 ## sunfish
-chart.Correlation(df_abund_comb[, c("redbreast_sunfish", "green_sunfish", 
+chart.Correlation(df_abund_comb[, c("redbreast_sunfish", "green_sunfish", "bluegill",
                                     "depth_mean", "velocity_mean", "substrate_mean", 
                                     "area", "area_ucb")], method="spearman", histogram=TRUE, cex = 10) 
 ## chubs
-chart.Correlation(df_abund_comb[, c("creek_chub", "bluehead_chub",
+chart.Correlation(df_abund_comb[, c("creek_chub", "bluehead_chub", "striped_jumprock",
                                     "depth_mean", "velocity_mean", "substrate_mean", 
                                     "area", "area_ucb")], method="spearman", histogram=TRUE, cex = 10) 
 
@@ -26,19 +26,17 @@ chart.Correlation(df_abund_comb[, c("creek_chub", "bluehead_chub",
 
 # Histogram of Cyprinid and Catastomid Movement
 
-chub.move.dist <- gghistogram(df_occ_move[df_occ_move$species %in% c('bluehead_chub','creek_chub', 'striped_jumprock'), ], x = "move", fill = "lightgrey",
-                              xlab = "Distance (m)", ylab = "Frequency", binwidth = 10, facet.by = c("interv","species")) +
+cent.move.dist <- gghistogram(df_occ_move[df_occ_move$species %in% c('bluehead_chub','creek_chub', 'striped_jumprock'), ], x = "move", fill = "lightgrey",
+            xlab = "Distance (m)", ylab = "Frequency", binwidth = 10, facet.by = c("interv","species")) +
   geom_vline(xintercept = 0, linetype="dashed", color = "red", size=0.9) +
   theme(axis.text = element_text(size = 12),
         axis.title = element_text(size = 12),
         strip.text = element_text(size = 12),
         legend.text = element_text(size = 12),
         legend.title = element_blank())
-
-chub.move.dist
+cent.move.dist
 
 # Histogram of Centrarchids Movement
-
 sunf.move.dist <- gghistogram(df_occ_move[df_occ_move$species %in% c('bluegill','green_sunfish','redbreast_sunfish'), ], x = "move", fill = "lightgrey",
                               xlab = "Distance (m)", ylab = "Frequency", binwidth = 10, facet.by = c("interv","species")) +
   geom_vline(xintercept = 0, linetype="dashed", color = "red", size=0.9) +
@@ -47,7 +45,6 @@ sunf.move.dist <- gghistogram(df_occ_move[df_occ_move$species %in% c('bluegill',
         strip.text = element_text(size = 12),
         legend.text = element_text(size = 12),
         legend.title = element_blank())
-
 sunf.move.dist
 
 # Histogram of general movement over all occasions
@@ -77,13 +74,17 @@ ggplot(df_cmr, aes(x= recap, fill = species))+
   theme_minimal()
 
 
+
+# Working -----------------------------------------------------------------
+
+
 # Plot emigration ~ density 
-df_plot %>% 
-  ggplot(aes(x = density,
-             y = emigration, color= species)) +
+df_mo %>% 
+  ggplot(aes(x = d,
+             y = emigration, color= d_species)) +
   geom_point(alpha = 0.2) +
-  facet_grid(rows = vars(species),
-             cols = vars(opponent)) +
+  facet_grid(rows = vars(d_species),
+             cols = vars(species.x)) +
   ylim(0, 1.4) +
   geom_smooth(method = "glm", 
               method.args = list(family = "binomial"), se=F) +
