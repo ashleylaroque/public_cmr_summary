@@ -3,7 +3,8 @@
 
 rm(list=ls())
 source(here::here("code/library.R"))
-#source(data source)
+source(here::here("code/format_pit_detection.R"))
+
 
 ##' Figures -----------------------------------------------------------------
 # plot raw data

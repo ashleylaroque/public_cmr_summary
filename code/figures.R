@@ -74,17 +74,15 @@ ggplot(df_cmr, aes(x= recap, fill = species))+
   theme_minimal()
 
 
-
-# Working -----------------------------------------------------------------
-
+# Plot emigration predicted by density and size -----------------------------------------------------------------
 
 # Plot emigration ~ density 
-df_mo %>% 
-  ggplot(aes(x = d,
-             y = emigration, color= d_species)) +
+df_plot %>% 
+  ggplot(aes(x = density,
+             y = emigration, color= species)) +
   geom_point(alpha = 0.2) +
-  facet_grid(rows = vars(d_species),
-             cols = vars(species.x)) +
+  facet_grid(rows = vars(species),
+             cols = vars(opponent)) +
   ylim(0, 1.4) +
   geom_smooth(method = "glm", 
               method.args = list(family = "binomial"), se=F) +
@@ -111,3 +109,52 @@ df_plot %>%
   theme(text = element_text(size = 20)) 
 
 
+# Plot  raw values of movement and density -------------------------------------------------------------------
+
+## plot movement vs. density
+ggplot(df_mo[df_mo$d_species %in% c('bluegill','green_sunfish','redbreast_sunfish'), ], aes(d, move)) +
+  geom_point(color= "#20A387FF")+
+  labs(y = "Distance Moved (m)", x = "Fish Density") +
+  theme_minimal()+
+  facet_grid(d_species ~ species.x, scales = "free")  # each grid shows how each species reacts to other species density
+#geom_smooth(method=lm, se=FALSE, color = "darkgrey")
+
+ggplot(df_mo[df_mo$d_species %in% c('creek_chub','bluehead_chub','striped_jumprock'), ], aes(d, move)) +
+  geom_point(color= "#20A387FF")+
+  labs(y = "Distance Moved (m)", x = "Fish Density") +
+  theme_minimal()+
+  facet_grid(d_species ~ species.x, scales = "free")
+#geom_smooth(method=lm, se=FALSE, color = "darkgrey")
+#### for the two above figures, is this actually pulling the correct information or is it getting mismatched?
+
+## plot movement vs. body size
+ggplot(df_mo[df_mo$d_species %in% c('bluegill','green_sunfish','redbreast_sunfish'), ], aes(size_ratio, move)) + # here this uses length per unit weight
+  geom_point(color= "#20A387FF")+
+  labs(y = "Distance Moved (m)", x = "Body Size Ratio (mm/g)") +
+  theme_minimal()+
+  facet_grid(d_species ~ species.x , scales = "free") 
+#geom_smooth(method=lm, se=FALSE, color = "darkgrey")
+
+ggplot(df_mo[df_mo$d_species %in% c('creek_chub','bluehead_chub','striped_jumprock'), ], aes(size_ratio, move)) + # here this uses length per unit weight
+  geom_point(color= "#20A387FF")+
+  labs(y = "Distance Moved (m)", x = "Body Size Ratio (mm/g)") +
+  theme_minimal()+
+  facet_grid(d_species ~ species.x , scales = "free")
+#geom_smooth(method=lm, se=FALSE, color = "darkgrey")
+
+## plot all habitat variables vs. fish density
+
+ggplot(df_z, aes(value , d )) + 
+  geom_point(color= "#20A387FF")+
+  labs(x = "Habitat", y = "Fish Density") +
+  theme_minimal()+
+  facet_wrap(~habitat_variable, scales = "free")
+
+## plot selected habitat variables vs. movement
+
+ggplot(df_z[df_z$habitat_variable %in% c('velocity_mean', 'area_ucb', 'substrate_mean', 'depth_mean'), ], # some likely correlated with each other ie pool area and velocity
+       aes(value , move)) + 
+  geom_point(color= "#20A387FF")+
+  labs(y = "Distance Moved (m)", x = "Habitat Variable") +
+  theme_minimal()+
+  facet_wrap(~habitat_variable, scales = "free")

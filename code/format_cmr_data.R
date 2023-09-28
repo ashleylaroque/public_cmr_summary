@@ -92,7 +92,7 @@ df0 <- foreach(i = seq_len(n_distinct(df_cmr$species)),
 # df_sp[fit$w < .3, ]
 
 df0 <- mutate(df0, col = ifelse(w < 0.3, "yes", "no"))
-write_csv(df0, "outlier_correction.csv")
+#write_csv(df0, "outlier_correction.csv")
 
 ## visualize after outlier removal
 ggplot(df0) +
