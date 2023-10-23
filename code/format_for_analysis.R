@@ -1,4 +1,4 @@
-# R version 4.1.3 
+# R version 4.3.1
 # Ashley LaRoque
 # Combine and format for analysis - CMR
 
@@ -45,7 +45,11 @@ df_m <- df_interval %>% #cmr data formatted with cap/recap intervals
             by = c("occasion_cap" = "occasion",
                    "section_cap" = "section")) %>%
   mutate(across(starts_with("d_"),
-                .fns = function(x) replace_na(x, 0)))
+                .fns = function(x) replace_na(x, 0))) %>% 
+mutate(move = (section_recap - section_cap) * 10,
+       move_abs = abs(section_recap - section_cap) * 10,
+       emigration = as.numeric(abs(section_recap - section_cap) > 0),
+       size_ratio = length_cap / weight_cap) # mm per unit g 
 
 # Format Movement ----------------------------------------------------------------
 
@@ -64,8 +68,9 @@ df_occ_move <- df_move %>%
   mutate(move = move * 10) %>% # section = 10m
   na.omit()
 
+## the following df_mo needs to be checked when joining df_density (habitat data)
 # Calculate movement and emigration with density
-df_mo <- df_interval %>%
+df_mo <- df_interval %>% 
   left_join(df0,
             by = c("tag",
                    "species",
@@ -78,7 +83,7 @@ df_mo <- df_interval %>%
   left_join(df_density,
             by = c("occasion_cap" = "occasion",
                    "section_cap" = "section"),
-            "species") %>% 
+                   "species") %>% 
   rename("d_species" = "species.y") %>% 
   mutate(move = (section_recap - section_cap) * 10,
          move_abs = abs(section_recap - section_cap) * 10,
@@ -110,19 +115,20 @@ df_abund_comb <- df_t %>% #df with cmr fish abundance data
 
 # Not in Use --------------------------------------------------------------
 
-# 
-# f_species <- c("green_sunfish",
-#                "redbreast_sunfish",
-#                "creek_chub",
-#                "bluehead_chub",
-#                "striped_jumprock",
-#                "bluegill")
-# 
-# df_plot <- df_mo %>%
-#   pivot_longer(cols = starts_with("d_species"),
-#                values_to = "density",
-#                names_to = "opponent") %>%
-#   filter(opponent %in% paste0("d_", f_species))
+
+f_species <- c("green_sunfish",
+               "redbreast_sunfish",
+               "creek_chub",
+               "bluehead_chub",
+               "striped_jumprock",
+               "bluegill")
+ 
+df_plot <- df_m %>%
+  pivot_longer(cols = starts_with("d_"),
+               values_to = "density",
+               names_to = "opponent") %>%
+  filter(opponent %in% paste0("d_", f_species)) 
+  
 
  
 

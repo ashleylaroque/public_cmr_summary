@@ -1,4 +1,4 @@
-# R version 4.1.3 
+# R version 4.3.1
 # Ashley LaRoque
 # Format CMR Data 
 
@@ -58,9 +58,54 @@ v_sp <- unique(df_cmr$species)
 # threshold value of "weight"
 z <- 0.3  # lower value only big will be removed = more deviation from line (play around with this value to know)
 
+# visualize outliers to be corrected
+# df0 <- foreach(i = seq_len(n_distinct(df_cmr$species)), 
+#                .combine = bind_rows) %do% {
+#                  
+#                  # subset data by species
+#                  df_sp <- df_cmr %>% 
+#                    filter(species == v_sp[i])
+#                  
+#                  # fit robust linear model
+#                  # robust linear model returns "weight" value for each data point
+#                  # based on deviation from the general trend (RLM)
+#                  fit <- MASS::rlm(log(weight) ~ log(length) + f_occasion,
+#                                   df_sp)
+#                  
+#                  cout <- df_sp %>% 
+#                    mutate(w = fit$w)
+#                  
+#                  if (any(fit$w < z)) {
+#                    # remove entries with weight < z
+#                    # which(fit$w < z) returns row numbers with w < z
+#                    # minus sign means "remove"
+#                    df_filter <- df_sp %>%
+#                      slice(-which(fit$w < z))
+#                  } else {
+#                    df_filter <- df_sp
+#                  }
+#                  
+#                  return(cout)
+#                }
+# ## select what rows are irrelgular
+# df_sp[fit$w < .3, ]
+
+#df1 <- mutate(df0, col = ifelse(w < 0.3, "yes", "no"))
+#write_csv(df1, "outlier_correction.csv")
+
+## visualize possible outliers
+# ggplot(df1) +
+#   geom_point(aes(x = length,
+#                  y = weight,
+#                  color = fcol)) +
+#   theme_minimal() +
+#   facet_wrap(~species, ncol= 3, scales="free") +
+#   scale_x_continuous(trans = "log10") +
+#   scale_y_continuous(trans = "log10")
+
 # repeat robust regression analysis to identify outliers
-  # finds anomalies in relationship 
-df0 <- foreach(i = seq_len(n_distinct(df_cmr$species)), 
+# finds anomalies in relationship 
+df0 <- foreach(i = seq_len(n_distinct(df_cmr$species)),
                .combine = bind_rows) %do% {
                  
                  # subset data by species
@@ -68,42 +113,32 @@ df0 <- foreach(i = seq_len(n_distinct(df_cmr$species)),
                    filter(species == v_sp[i])
                  
                  # fit robust linear model
-                 # robust linear model returns "weight" value for each data point
-                 # based on deviation from the general trend (RLM)
-                 fit <- MASS::rlm(log(weight) ~ log(length) + f_occasion,
+                 # robust linear model returns "weight" value for each data point based on deviation from the general trend
+                 fit <- MASS::rlm(log(weight) ~ log(length),
                                   df_sp)
                  
-                 cout <- df_sp %>% 
-                   mutate(w = fit$w)
+                 if (any(fit$w < z)) {
+                   # remove entries with weight < z
+                   # which(fit$w < z) returns row numbers with w < z
+                   # minus sign means "remove"
+                   df_filter <- df_sp %>% 
+                     slice(-which(fit$w < z))
+                 } else {
+                   df_filter <- df_sp
+                 }
                  
-                 # if (any(fit$w < z)) {
-                 #   # remove entries with weight < z
-                 #   # which(fit$w < z) returns row numbers with w < z
-                 #   # minus sign means "remove"
-                 #   df_filter <- df_sp %>% 
-                 #     slice(-which(fit$w < z))
-                 # } else {
-                 #   df_filter <- df_sp
-                 # }
-                 
-                 return(cout)
+                 return(df_filter)
                }
-# ## select what rows are irrelgular
-# df_sp[fit$w < .3, ]
-
-df0 <- mutate(df0, col = ifelse(w < 0.3, "yes", "no"))
-#write_csv(df0, "outlier_correction.csv")
 
 ## visualize after outlier removal
 ggplot(df0) +
   geom_point(aes(x = length,
                  y = weight,
-                 color = col)) +
+                 color = f_occasion)) +
   theme_minimal() +
   facet_wrap(~species, ncol= 3, scales="free") +
   scale_x_continuous(trans = "log10") +
   scale_y_continuous(trans = "log10")
-  
 
 # Calculate intervals for movement and merging ------------------------------------------------------
 
@@ -170,15 +205,16 @@ df_nt <- read_csv(here::here("data_raw/data_non_target.csv")) %>%
                              species == "DAT" ~ "darter",
                              species == "EMF" ~ "eastern_mosquitofish",
                              species == "GSF" ~ "green_sunfish",
-                             species == "Killifish" ~ "killifish",
+                             species == "KF" ~ "killifish",
                              species == "LMB" ~ "largemouth_bass",
                              species == "LOACH" ~ "loach",
-                             species == "Madtom" ~ "madtom",
+                             species == "MADTOM" ~ "madtom",
                              species == "RBS" ~ "redbreast_sunfish",
                              species == "REDHORSE" ~ "redhorse",
-                             species == "Shiner" ~ "shiner",
+                             species == "SHINER" ~ "shiner",
                              species == "STJ" ~ "striped_jumprock",
-                             species == "Warmouth" ~ "warmouth")) %>% 
+                             species == "WARMOUTH" ~ "warmouth",
+                             species == "YB" ~ "yellow_bullhead")) %>% 
   group_by(species, section, occasion) %>% 
   summarize(abundance = n()) %>% 
   ungroup()

@@ -1,4 +1,4 @@
-# R version 4.1.3 
+# R version 4.3.1
 # Ashley LaRoque
 
 
@@ -6,6 +6,8 @@
 
 source(here::here("code/library.R"))
 source(here::here("code/format_cmr_data.R"))
+source(here::here("code/format_cmr_habitat_data.R"))
+source(here::here("code/format_for_analysis.R"))
 source(here::here("code/format_pit_detection.R"))
 
 # Correlations of fish abundance with habitat -----------------------------------------------------------------
@@ -52,7 +54,7 @@ sunf.move.dist
 ## generate labels and order of plots 
 fish_labs <- c(bluehead_chub = "Bluehead Chub", creek_chub = "Creek Chub", striped_jumprock = "Striped Jumprock",
                redbreast_sunfish = "Redbreast Sunfish", green_sunfish = "Green Sunfish", bluegill = "Bluegill")
-fish_order <- c('bluehead_chub','creek_chub',' striped_jumprock',
+fish_order <- c('bluehead_chub','creek_chub','striped_jumprock',
                 'green_sunfish','redbreast_sunfish', 'bluegill')
 
 ## factor species column by the fish_order 
@@ -64,9 +66,11 @@ df_m2 <- arrange(transform(df_m,
 all_movement <- gghistogram(df_occ_move, x= "move", fill = "dodgerblue",
             xlab = "Distance (m)", ylab = "Frequency", binwidth = 10) +
   geom_vline(xintercept = 0, linetype="dashed", color = "red", size=0.9) +
-  facet_wrap(species ~ ., factor(levels= fish_order), labeller = as_labeller(fish_labs))+
+  facet_wrap(species ~ ., labeller = as_labeller(fish_labs))+
   theme(axis.text.x = element_text(angle = 45, vjust = .5))
 all_movement
+
+# place before labeller but not working saying must be whole number = factor(levels= fish_order), 
 
 ftable(df_cmr$recap)
 ggplot(df_cmr, aes(x= recap, fill = species))+
@@ -82,7 +86,8 @@ df_plot %>%
              y = emigration, color= species)) +
   geom_point(alpha = 0.2) +
   facet_grid(rows = vars(species),
-             cols = vars(opponent)) +
+             cols = vars(opponent),
+             scales = "free") +
   ylim(0, 1.4) +
   geom_smooth(method = "glm", 
               method.args = list(family = "binomial"), se=F) +
@@ -91,23 +96,62 @@ df_plot %>%
   labs(x= "Density", y= "Emigration") +
   theme(legend.position = "none")   
 
+# plot for SFS
+df_plot2 <- df_plot %>% 
+  filter(species %in% c('bluehead_chub', 'creek_chub', 'green_sunfish','redbreast_sunfish')) %>% 
+  filter(opponent %in% c('d_bluehead_chub', 'd_creek_chub', 'd_green_sunfish','d_redbreast_sunfish'))
 
+sfs_density <- ggplot(df_plot2, 
+                   aes(x = density ,
+                       y = emigration, 
+                      color= species)) +
+  geom_point(alpha = 0.2) +
+  facet_grid(rows = vars(species),
+             cols = vars(opponent),
+             scales = "free") +
+  ylim(0, 1.4) +
+  geom_smooth(method = "glm", 
+              method.args = list(family = "binomial"), se=F) +
+  scale_color_manual(values=c("darkcyan", "maroon", "mediumpurple1", "steelblue3"), 
+                     name="Species") +
+  labs(x= "Density", y= "Emigration") +
+  theme(legend.position = "none") 
+sfs_density
 
-# Plot emigration ~ length
+# Plot emigration ~ weight
+
 df_plot %>% 
   ggplot(aes(x = length_cap,
              y = emigration, color= species)) +
   geom_point(alpha = 0.2) +
-  facet_wrap(facets = ~ species) +
+  facet_wrap(facets = ~ species, 
+             scales = "free") +
   ylim(0, 1.2) +
   geom_smooth(method = "glm", 
               method.args = list(family = "binomial"), se=F) +
   scale_color_manual(values=c("darkcyan", "maroon", "mediumpurple1", "royalblue4", "palegreen4", "steelblue3"), 
                      name="Species") +
-  labs(x= "Length at Capture", y= "Emigration") +
+  labs(x= "N at Capture", y= "Emigration") +
   theme(legend.position = "none")+
   theme(text = element_text(size = 20)) 
 
+# plot for SFS
+sfs_weight <- ggplot(df_plot[df_plot$species %in% c('bluehead_chub', 'creek_chub', 'green_sunfish','redbreast_sunfish'), ], 
+         aes(x = weight_cap,
+             y = emigration, 
+             color= species)) +
+  geom_point(alpha = 0.2) +
+  facet_wrap(facets = ~ species, 
+             scales = "free") +
+  ylim(0, 1.2) +
+  geom_smooth(method = "glm", 
+              method.args = list(family = "binomial"), se=F) +
+  scale_color_manual(values=c("darkcyan", "maroon", "mediumpurple1", "steelblue3"), 
+                     name="Species") +
+  labs(x= "Weight at Capture", y= "Emigration") +
+  theme(legend.position = "none")+
+  theme(text = element_text(size = 20)) 
+sfs_weight
 
 # Plot  raw values of movement and density -------------------------------------------------------------------
 
