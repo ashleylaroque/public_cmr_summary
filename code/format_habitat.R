@@ -1,14 +1,14 @@
-# R version 4.1.3 
+# R version 4.3.1 
 # Ashley LaRoque
 # Format Habitat Data - CMR
 
 source(here::here("code/library.R"))
-source(here::here("code/format_cmr_data.R"))
+source(here::here("code/format_cmr.R"))
 
 # Read Habitat Data-----------------------------------------------------------------
 
 ## input data
-df_habitat <- read_csv("data_raw/north_campus_habitat_raw.csv") %>%
+df_habitat <- read_csv("data_raw/data_habitat.csv") %>%
   rename_with(.fn = str_to_lower, .cols = everything()) %>% 
   select(-c(deepest_depth, comments)) %>% # stopped measuring deepest depth partway
   drop_na(velocity1, velocity2, velocity3)  # remove velocity cells with NA

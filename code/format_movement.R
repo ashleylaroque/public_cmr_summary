@@ -3,8 +3,8 @@
 # Combine and format for analysis - CMR
 
 source(here::here("code/library.R"))
-source(here::here("code/format_cmr_data.R"))
-source(here::here("code/format_cmr_habitat_data.R"))
+source(here::here("code/format_cmr.R"))
+source(here::here("code/format_habitat.R"))
 
 # Bind all data sets together ---------------------------------------------
 

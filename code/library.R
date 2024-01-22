@@ -2,7 +2,10 @@ pacman::p_load(tidyverse,
                ggpubr,
                foreach,
                usethis,
-               PerformanceAnalytics)
+               PerformanceAnalytics,
+               grid,
+               ggh4x,
+               gtable)
 
 
-# control + shift + C to comment out multiple lines 
+# command + shift + C to comment out multiple lines 
