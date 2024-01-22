@@ -6,7 +6,6 @@ pacman::p_load(tidyverse,
 
 source("code/function.R")
 source("code/setup_cjs.R")
-source("code/model_cjs.R")
 
 # cjs formatted data ------------------------------------------------------
 

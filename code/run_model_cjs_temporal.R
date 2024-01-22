@@ -8,7 +8,7 @@ pacman::p_load(tidyverse,
 
 source("code/function.R")
 source("code/setup_cjs.R")
-source("code/model_cjs_temporal.R")
+
 
 
 Nind <- nrow(Y)
