@@ -1,6 +1,6 @@
 # Data set up for CJS model 
 
-library(tidyverse)
+source("code/library.R")
 source("code/function.R")
 
 # Setup Data for Temporal CJS ---------------------------------------
@@ -40,16 +40,19 @@ apply(Y, MARGIN = 1, FUN = getf)
 # Setup Data for Movement Model-----------------------------------------------------
 
 # Format Data for Movement
-Y2 <- read_csv(here::here("data_formatted/formatted_cmr.csv")) %>% # formatted cmr data
-  select(f_occasion, tag, section, species) %>%
+ft_move <- read_csv(here::here("data_formatted/formatted_cmr.csv")) %>% # formatted cmr data
+  select(occasion, tag, section, species) %>%
   subset(species == "bluehead_chub") %>% # select only bluehead chubs
-  group_by(f_occasion, tag) %>% 
-  sample_n(1) %>% 
+  group_by(occasion, tag) %>% 
+  slice(which.max(section)) %>% 
   filter(!is.na(tag)) %>%
-  distinct(f_occasion, tag, .keep_all = TRUE) %>%
-  spread(f_occasion, section) %>% 
-  ungroup() %>% 
+  #distinct(occasion, tag, .keep_all = TRUE) %>%
+  spread(occasion, section) %>% 
+  ungroup()
+
+Y2 <- ft_move %>% 
   select(-c(tag, species)) %>% 
   data.matrix()
 
+fmat <- apply(Y2, MARGIN = 1, FUN = get_nonna)
 

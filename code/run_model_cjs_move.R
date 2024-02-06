@@ -3,23 +3,26 @@
 
 # Setup -------------------------------------------------------------------
 
-pacman::p_load(tidyverse,
-               lme4)
-
+source("code/library.R")
 source("code/function.R")
 source("code/setup_cjs.R")
 
-
 Nind <- nrow(Y2)
 Nocc <- ncol(Y2)
-Fc <- apply(Y2, MARGIN = 1, getf)
+X <- Y2 * 10 - 5
+Y <- apply(Y2, 1, FUN = function(x) ifelse(is.na(x), 0, 1)) %>% 
+  t()
+Fc <- apply(Y, MARGIN = 1, getf)
 
-d_jags <- list(Y2 = Y2,              # recapture 0-1 
+
+d_jags <- list(Y = Y,
+               X = X,              # recapture 0-1 
                Nind = Nind,          # number of individuals
                Nocc = Nocc,          # occasion 1-13
-               Fc = Fc)              # first occasion detected
+               Fc = Fc,
+               L = 430)              # first occasion detected
 
-para <- c("mean.phi", "mean.p", "sigma2")
+para <- c("mean.phi", "mean.p", "sd_x")
 
 # mcmc setup --------------------------------------------------------------
 
@@ -28,7 +31,7 @@ mcjs <- runjags::read.jagsfile("code/model_cjs_move.R")
 
 ## mcmc setup ####
 n_ad <- 1000
-n_iter <- 2.0E+3
+n_iter <- 1.0E+3
 n_thin <- max(3, ceiling(n_iter / 250)) #happens second want chains to converge 
 n_burn <- ceiling(max(10, n_iter/2)) #happens first and gets rid of noise 
 n_sample <- ceiling(n_iter / n_thin)
