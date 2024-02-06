@@ -1,4 +1,4 @@
-# Run CJS Model with random temporal variability
+# Run CJS Model with movement integrated
 
 
 # Setup -------------------------------------------------------------------
@@ -10,12 +10,11 @@ source("code/function.R")
 source("code/setup_cjs.R")
 
 
+Nind <- nrow(Y2)
+Nocc <- ncol(Y2)
+Fc <- apply(Y2, MARGIN = 1, getf)
 
-Nind <- nrow(Y)
-Nocc <- ncol(Y)
-Fc <- apply(Y, MARGIN = 1, getf)
-
-d_jags <- list(Y = Y,                # recapture 0-1 
+d_jags <- list(Y2 = Y2,              # recapture 0-1 
                Nind = Nind,          # number of individuals
                Nocc = Nocc,          # occasion 1-13
                Fc = Fc)              # first occasion detected
@@ -25,7 +24,7 @@ para <- c("mean.phi", "mean.p", "sigma2")
 # mcmc setup --------------------------------------------------------------
 
 ## model file ####
-mcjs <- runjags::read.jagsfile("code/model_cjs_temporal.R")
+mcjs <- runjags::read.jagsfile("code/model_cjs_move.R")
 
 ## mcmc setup ####
 n_ad <- 1000

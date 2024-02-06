@@ -72,9 +72,12 @@ all_movement
 # place before labeller but not working saying must be whole number = factor(levels= fish_order), 
 
 ftable(df_cmr$recap)
-ggplot(df_cmr, aes(x= recap, fill = species))+
-  geom_bar() +
-  theme_minimal()
+df_cmr %>% 
+  mutate(fi_col = ifelse(recap == "n", "darkblue", "lightgreen")) %>% 
+  ggplot(aes(x= recap, fill = fi_col)) +
+    geom_bar() +
+   theme_minimal() +
+   facet_wrap(~species)
 
 
 # Plot emigration predicted by density and size -----------------------------------------------------------------
@@ -105,6 +108,52 @@ names(species.labs) <- c("bluehead_chub", "creek_chub" ,"green_sunfish", "redbre
 
 opp.labs <- c("Bluehead Chub", "Creek Chub", "Green Sunfish", "Redbreast Sunfish")
 names(opp.labs) <- c("d_bluehead_chub", "d_creek_chub" ,"d_green_sunfish", "d_redbreast_sunfish")
+#___________________
+species.l <- c( "Creek Chub")
+names(species.l) <- c( "creek_chub")
+
+opp.l <- c("Bluehead Chub", "Green Sunfish")
+names(opp.l) <- c("d_bluehead_chub", "d_green_sunfish")
+
+new <- df_plot2 %>% 
+  subset(species == "creek_chub") %>% 
+  subset(opponent == "d_bluehead_chub" |
+           opponent == "d_green_sunfish")
+
+sfs_d <- ggplot(new, 
+      aes(x = density ,
+          y = emigration,
+          color= "species")) +
+  geom_point(alpha = 0.2) +
+  ylim(0, 1.4) +
+  geom_smooth(method = "glm", 
+              method.args = list(family = "binomial"), se=F) +
+  facet_grid(rows = vars(species),
+             cols = vars(opponent),
+             scales = "free",
+             switch = "x",  # use switch = "y" to swap strip to the left side
+             labeller = labeller(species = species.l, opponent = opp.l)) +
+  labs(x= "Density (count/m^2)", y= "Emigration") +
+  theme_minimal() +
+  ggtitle("Opponent")+
+  scale_color_manual(values=c( "maroon"), 
+                       name="Species")+
+  theme(legend.position = "none",
+        text = element_text(size = 20),
+        plot.title = element_text(hjust = 0.5, size = 20),
+        strip.background = element_rect(color = "black"),
+        strip.text = element_text(color = 'white'),
+        strip.placement = "outside")
+g <- ggplot_gtable(ggplot_build(sfs_d))
+strip_both <- which(grepl('strip-', g$layout$name))
+fills <- c("darkcyan", "mediumpurple1", "maroon" )
+k <- 1
+for (i in strip_both) {
+  j <- which(grepl('rect', g$grobs[[i]]$grobs[[1]]$childrenOrder))
+  g$grobs[[i]]$grobs[[1]]$children[[j]]$gp$fill <- fills[k]
+  k <- k+1
+}
+grid.draw(g)
 
 
 sfs_density <- ggplot(df_plot2, 
@@ -115,19 +164,22 @@ sfs_density <- ggplot(df_plot2,
   facet_grid(rows = vars(species),
              cols = vars(opponent),
              scales = "free",
+             switch = "x",  # use switch = "y" to swap strip to the left side
              labeller = labeller(species = species.labs, opponent = opp.labs)) +
   ylim(0, 1.4) +
   geom_smooth(method = "glm", 
               method.args = list(family = "binomial"), se=F) +
   scale_color_manual(values=c("darkcyan", "maroon", "mediumpurple1", "steelblue3"), 
                      name="Species") +
-  labs(x= "Density", y= "Emigration") +
+  labs(x= "Density (count/m^2)", y= "Emigration") +
   theme_minimal() +
   ggtitle("Opponent")+
   theme(legend.position = "none",
         text = element_text(size = 20),
         plot.title = element_text(hjust = 0.5, size = 20),
-        strip.background = element_rect(color = "black")) 
+        strip.background = element_rect(color = "black"),
+        strip.text = element_text(color = 'white'),
+        strip.placement = "outside")
 sfs_density
 
 
@@ -183,7 +235,9 @@ sfs_weight <- ggplot(df_plot[df_plot$species %in% c('bluehead_chub', 'creek_chub
   labs(x= "Weight at Capture", y= "Emigration") +
   theme_minimal() +
   theme(legend.position = "none",
-        text = element_text(size = 20))
+        text = element_text(size = 20),
+        strip.text = element_text(color = 'white'))
+
 sfs_weight
 
 strip1 <- strip_themed(background_x = elem_list_rect(fill = c("darkcyan", "maroon", "mediumpurple1", "steelblue3", "lightblue", "lightpink")))

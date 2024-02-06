@@ -3,16 +3,15 @@
 library(tidyverse)
 source("code/function.R")
 
-# real data for cjs model ---------------------------------------
+# Setup Data for Temporal CJS ---------------------------------------
 
-## sample_n(1) is to make sure to have one capture per occasion: must be corrected
 df0 <- read_csv(here::here("data_formatted/formatted_cmr.csv")) %>% 
   select(-c(julian, 
             f_occasion,
             date)) %>% 
-  subset(species == "redbreast_sunfish") %>% 
+  subset(species == "bluehead_chub") %>% 
   group_by(occasion, tag) %>% 
-  sample_n(1) %>% 
+  sample_n(1) %>% ## sample_n(1) is to make sure to have one capture per occasion: must be corrected
   ungroup()
 
 ## convert the data into matrix format
@@ -35,3 +34,25 @@ for(i in 1:nrow(Y)) {
 
 ## get first capture id
 apply(Y, MARGIN = 1, FUN = getf)
+
+
+
+# Setup Data for Movement Model-----------------------------------------------------
+
+# Format Data for Movement
+ft_move <- read_csv(here::here("data_formatted/formatted_cmr.csv")) %>% # formatted cmr data
+  select(f_occasion, tag, section, species) %>%
+  subset(species == "bluehead_chub") %>% # select only bluehead chubs
+  group_by(f_occasion, tag) %>% 
+  sample_n(1) %>% 
+  filter(!is.na(tag)) %>%
+  distinct(f_occasion, tag, .keep_all = TRUE) %>%
+  spread(f_occasion, section) %>% 
+  ungroup() %>% 
+  select(-c(tag, species)) %>% 
+  data.matrix()
+
+
+## get first capture id
+apply(Y, MARGIN = 1, FUN = getf)
+
