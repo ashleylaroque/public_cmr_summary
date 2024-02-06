@@ -40,7 +40,7 @@ apply(Y, MARGIN = 1, FUN = getf)
 # Setup Data for Movement Model-----------------------------------------------------
 
 # Format Data for Movement
-ft_move <- read_csv(here::here("data_formatted/formatted_cmr.csv")) %>% # formatted cmr data
+Y2 <- read_csv(here::here("data_formatted/formatted_cmr.csv")) %>% # formatted cmr data
   select(f_occasion, tag, section, species) %>%
   subset(species == "bluehead_chub") %>% # select only bluehead chubs
   group_by(f_occasion, tag) %>% 
@@ -52,7 +52,4 @@ ft_move <- read_csv(here::here("data_formatted/formatted_cmr.csv")) %>% # format
   select(-c(tag, species)) %>% 
   data.matrix()
 
-
-## get first capture id
-apply(Y, MARGIN = 1, FUN = getf)
 
