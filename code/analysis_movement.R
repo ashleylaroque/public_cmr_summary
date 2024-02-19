@@ -209,9 +209,9 @@ lapply(list_m, summary)
 # GLM weight 
 list_m <- lapply(1:length(f_species), function(i) {
   
-  glm(move_abs ~
+  glm(emigration ~
         scale(weight_cap),
-      family = "gaussian",
+      family = "binomial",
       data = filter(df_m, species == f_species[i]))
   
 })

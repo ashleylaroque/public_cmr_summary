@@ -9,8 +9,9 @@ rm(list=ls())
 source(here::here("code/library.R"))
 
 # Read Data ---------------------------------------------------------------
+data <- read_csv(here::here("data_raw/data_cmr_master.csv"))
 
-df_cmr <- read_csv(here::here("data_raw/data_cmr_master.csv")) %>% 
+df_cmr <- data %>% 
   rename_with(.fn = str_to_lower,
               .cols = everything()) %>% # make column headers lowercase
   dplyr::select(-c(error_corrected, 
@@ -155,7 +156,7 @@ df0 <- df0 %>% #df0 is after outlier correction
   slice(which.min(date)) %>% # pick the first capture in each occasion
   ungroup()
 
-write.csv(df0, file = "formatted_cmr.csv", row.names = F)
+#write.csv(df0, file = "formatted_cmr.csv", row.names = F)
 
 df_wide <- df0 %>% 
   pivot_wider(id_cols = c(tag, species),

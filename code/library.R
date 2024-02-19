@@ -9,3 +9,4 @@ pacman::p_load(tidyverse,
 
 
 # command + shift + C to comment out multiple lines 
+# sessionInfo() to extract version etc

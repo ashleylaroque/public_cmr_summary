@@ -39,10 +39,10 @@ model {
   ## dispersal model
   ## prior
   
-  ## if you want to model the effects of predictors,
-  ## make sd_x as a function of predictors
+  ## if you want to model the effects of predictors, make sd_x as a function of predictors
   ## e.g., log(sd_x) <- alpha + beta * size[i, t]
   sd_x ~ dunif(0, 1000)
+#  log(sd_x) <- alpha + beta * size[i, t]
   tau_x <- pow(sd_x, -2)
   
   ## likelihood

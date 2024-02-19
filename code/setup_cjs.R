@@ -39,14 +39,13 @@ apply(Y, MARGIN = 1, FUN = getf)
 
 # Setup Data for Movement Model-----------------------------------------------------
 
-# Format Data for Movement
+# Format Data for Movement across occasions
 ft_move <- read_csv(here::here("data_formatted/formatted_cmr.csv")) %>% # formatted cmr data
   select(occasion, tag, section, species) %>%
   subset(species == "bluehead_chub") %>% # select only bluehead chubs
   group_by(occasion, tag) %>% 
   slice(which.max(section)) %>% 
   filter(!is.na(tag)) %>%
-  #distinct(occasion, tag, .keep_all = TRUE) %>%
   spread(occasion, section) %>% 
   ungroup()
 
@@ -56,3 +55,18 @@ Y2 <- ft_move %>%
 
 fmat <- apply(Y2, MARGIN = 1, FUN = get_nonna)
 
+# Format Data with Body Length over all occasions
+id_size <- read_csv(here::here("data_formatted/formatted_cmr.csv")) %>% # formatted cmr data
+  select(occasion, tag, section, species, length) %>%
+  subset(species == "bluehead_chub") %>% # select only bluehead chubs
+  group_by(occasion, tag) %>% 
+  slice(which.max(section)) %>%  
+  filter(!is.na(tag)) %>%
+  spread(occasion, length) %>% 
+  ungroup()
+
+Y3 <- id_size %>% 
+  select(-c(tag, species, section)) %>% 
+  data.matrix()
+
+fmat_length <- apply(Y3, MARGIN = 1, FUN = get_nonna) # can use same function because it takes first non-NA
