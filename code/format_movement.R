@@ -15,7 +15,7 @@ df_density <- df_h_sec %>% #df with all habitat data
   left_join(df_nt, #df with all non-target fish data
             by = c("species", "section", "occasion")) %>%
   rowwise() %>%
-  mutate(n = sum(c(abundance.x, abundance.y), # abundance = n
+  mutate(n = sum(c(abundance.x, abundance.y), # abundance (x and y are from cmr and non target) = n
                  na.rm = TRUE),
          d = n / area) %>% # density (d) = abundance per area
   select(-c(abundance.x, abundance.y)) %>% 
@@ -62,9 +62,9 @@ df_move <- filter(df_cmr, !is.na(tag)) %>%
 df_occ_move <- df_move %>%
   mutate(Mv12 = occ2 - occ1, Mv23 = occ3 - occ2, Mv34 = occ4 - occ3, Mv45 = occ5 - occ4, Mv56 = occ6 - occ5, 
          Mv67 = occ7 - occ6, Mv78 = occ8 - occ7, Mv89 = occ9 - occ8, Mv910 = occ10 - occ9, 
-         Mv1011 = occ11 - occ10, Mv1112 = occ12 - occ11) %>%
-  select(tag, species, Mv12:Mv1112) %>%
-  gather(interv, move, Mv12:Mv1112, factor_key = TRUE) %>%
+         Mv1011 = occ11 - occ10, Mv1112 = occ12 - occ11, Mv1213 = occ13 - occ12, Mv1314 = occ14 - occ13) %>%
+  select(tag, species, Mv12:Mv1314) %>%
+  gather(interv, move, Mv12:Mv1314, factor_key = TRUE) %>%
   mutate(move = move * 10) %>% # section = 10m
   na.omit()
 

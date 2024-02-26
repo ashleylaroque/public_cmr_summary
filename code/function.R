@@ -117,3 +117,9 @@ mrcheck <- function(data,
 getf <- function(x) min(which(x == 1))
 
 get_nonna <- function(x) min(which(!is.na(x)))
+
+
+
+
+
+

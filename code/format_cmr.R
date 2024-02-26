@@ -3,12 +3,13 @@
 # Format CMR Data 
 
 
-# Setup -------------------------------------------------------------------
-
-rm(list=ls())
-source(here::here("code/library.R"))
 
 # Read Data ---------------------------------------------------------------
+drive_download("data_cmr_master_workingcopy", 
+               type = "csv", 
+               path = "data_raw/data_cmr_master.csv", 
+               overwrite = T )
+
 data <- read_csv(here::here("data_raw/data_cmr_master.csv"))
 
 df_cmr <- data %>% 
@@ -25,7 +26,9 @@ df_cmr <- data %>%
   rename(tag = tag_id2) %>%  # change column name
   drop_na(tag) %>% #omit NA values
   filter(mortality == "n") %>% #filter out moralities 
-  mutate(f_occasion = paste0("occ", occasion)) #add column to make occasions into characters
+  mutate(f_occasion = paste0("occ", occasion))  #add column to make occasions into characters
+
+
 
 # Check Data --------------------------------------------------------------
 
@@ -147,16 +150,14 @@ ggplot(df0) +
 
 ## prepare data for merging with non-target and habitat data
 df0 <- df0 %>% #df0 is after outlier correction
-  dplyr::select(-c(recap,
-                   mortality,
-                   fin_recap)) %>% # remove unnecessary columns
   mutate(date = as.Date(date, format = "%m/%d/%Y"), # data type change: date column
          julian = julian(date)) %>% # julian date because R wont recognize other date formats for gathering earliest occurance
+  drop_na(species) %>% 
   group_by(tag, occasion) %>% # group by tag and occasion
   slice(which.min(date)) %>% # pick the first capture in each occasion
   ungroup()
 
-#write.csv(df0, file = "formatted_cmr.csv", row.names = F)
+write.csv(df0, file = "formatted_cmr.csv", row.names = F)
 
 df_wide <- df0 %>% 
   pivot_wider(id_cols = c(tag, species),
@@ -186,8 +187,7 @@ df_interval <- df_wide %>%
            occasion_recap)
 
 ## abundance of tagged individuals per section per occasion
-df_t <- df_cmr %>% 
-  drop_na(species) %>% 
+df_t <- df0 %>% 
   group_by(species,
            section,
            occasion) %>% 
@@ -196,6 +196,11 @@ df_t <- df_cmr %>%
 
 
 # Format Non-Target Data --------------------------------------------------
+
+drive_download("data_non_target_workingcopy", 
+               type = "csv", 
+               path = "data_raw/data_non_target.csv", 
+               overwrite = T )
 
 # read data
 df_nt <- read_csv(here::here("data_raw/data_non_target.csv")) %>% 

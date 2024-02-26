@@ -7,6 +7,11 @@ source(here::here("code/format_cmr.R"))
 
 # Read Habitat Data-----------------------------------------------------------------
 
+drive_download("data_habitat_workingcopy", 
+               type = "csv", 
+               path = "data_raw/data_habitat.csv", 
+               overwrite = T )
+
 ## input data
 df_habitat <- read_csv("data_raw/data_habitat.csv") %>%
   rename_with(.fn = str_to_lower, .cols = everything()) %>% 

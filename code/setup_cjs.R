@@ -2,6 +2,7 @@
 
 source("code/library.R")
 source("code/function.R")
+source("code/format_movement.R")
 
 # Setup Data for Temporal CJS ---------------------------------------
 
@@ -40,7 +41,7 @@ apply(Y, MARGIN = 1, FUN = getf)
 # Setup Data for Movement Model-----------------------------------------------------
 
 # Format Data for Movement across occasions
-ft_move <- read_csv(here::here("data_formatted/formatted_cmr.csv")) %>% # formatted cmr data
+ft_move <- read_csv(here::here("data_formatted/formatted_cmr.csv")) %>%   # formatted cmr data
   select(occasion, tag, section, species) %>%
   subset(species == "bluehead_chub") %>% # select only bluehead chubs
   group_by(occasion, tag) %>% 
@@ -55,18 +56,39 @@ Y2 <- ft_move %>%
 
 fmat <- apply(Y2, MARGIN = 1, FUN = get_nonna)
 
-# Format Data with Body Length over all occasions
-id_size <- read_csv(here::here("data_formatted/formatted_cmr.csv")) %>% # formatted cmr data
-  select(occasion, tag, section, species, length) %>%
+
+# Format Density Matrix ---------------------------------------------------
+
+# Format Data with density over all occasions
+# density for target species across occasion and section
+ft_density <- df_density %>% # from 'format_movement'
+  select(occasion, section, species, d) %>% 
   subset(species == "bluehead_chub") %>% # select only bluehead chubs
-  group_by(occasion, tag) %>% 
-  slice(which.max(section)) %>%  
-  filter(!is.na(tag)) %>%
-  spread(occasion, length) %>% 
-  ungroup()
+  filter(!is.na(species)) %>% #remove sections with no fish by filtering species for NA
+  spread(occasion, d) 
 
-Y3 <- id_size %>% 
-  select(-c(tag, species, section)) %>% 
-  data.matrix()
+ft_density <- data.frame(lapply(ft_density, function(x) {replace(x, is.na(x), 0 )}))
 
-fmat_length <- apply(Y3, MARGIN = 1, FUN = get_nonna) # can use same function because it takes first non-NA
+
+ Y3 <- ft_density %>% 
+   select(-c(species, section)) %>% 
+   data.matrix()
+
+
+# Format Size Matrix ------------------------------------------------------
+
+# Format Data with Body Length over all occasions
+# ft_size <- read_csv(here::here("data_formatted/formatted_cmr.csv")) %>% # formatted cmr data
+#   select(occasion, tag, section, species, length) %>%
+#   subset(species == "bluehead_chub") %>% # select only bluehead chubs
+#   group_by(occasion, tag) %>% 
+#   slice(which.max(section)) %>%  
+#   filter(!is.na(tag)) %>%
+#   spread(occasion, length) %>% 
+#   ungroup()
+# 
+# Y4 <- ft_size %>% 
+#   select(-c(tag, species, section)) %>% 
+#   data.matrix()
+# 
+# fmat_length <- apply(Y4, MARGIN = 1, FUN = get_nonna) # can use same function because it takes first non-NA
