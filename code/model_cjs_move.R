@@ -41,16 +41,25 @@ model {
   
   ## if you want to model the effects of predictors, make sd_x as a function of predictors
   ## e.g., log(sd_x) <- alpha + beta * size[i, t]
-  sd_x ~ dunif(0, 1000)
-#  log(sd_x) <- alpha + beta * size[i, t]
-  tau_x <- pow(sd_x, -2)
+  sd_x ~ dunif(0, 1000) # constraint for movement (1000 comes from study reach being 430 so logically the number must be larger than the absolute max value)
+  tau_x <- pow(sd_x, -2)  # variance for movement
+  sd_eps ~ dunif(0, 10) # constraint for temporal variation
+  tau_eps <- pow(sd_eps, -2) # variance for temporal variation
+  alpha ~ dunif(0, 1) # do these need to be in a for loop for time and individual variation?
+  beta ~ dunif(0, 1) # ^? not sure if '1' is the right value here (saying all equal density prob?)
   
   ## likelihood
   for (i in 1:Nind) {
     for (t in (Fc[i] + 1):Nocc) {
-      X[i, t] ~ dnorm(X[i, t - 1], tau_x)
-      xi[i, t] <- step(s[i, t] - 1.5)
-      s[i, t] <- step(L - X[i, t]) + step(X[i, t])
+      X[i, t] ~ dnorm(X[i, t - 1], tau_x) # gross movement
+      xi[i, t] <- step(s[i, t] - 1.5) # true emigration
+      s[i, t] <- step(L - X[i, t]) + step(X[i, t]) # component to measure emigration (whether they have left up vs downstream)
+    
+      # density predictor   
+      tau_x[i, t - 1] <- pow(sd_x[i, t-1], -2) # variance over time and individual from movement contraint over time and individual
+      log(sd_x) <- alpha + beta * Density[i, t - 1] + eps[i, t - 1] # integrate density with a temporal variation parameter
+      eps[i, t - 1] ~ dnorm(0, tau_eps) # eps integrates temporal variation
+    
     }#t
   }#i
   

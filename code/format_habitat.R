@@ -55,7 +55,7 @@ df_sec <- df_tr %>%
             velocity_mean = mean(velocity),
             substrate_mean = mean(substrate),
             area = width * section_length,
-            area_pool = width * na.omit(pool_length),
+            area_pool = width * na.omit(pool_length),  
             area_run = width * na.omit(run_length),
             area_riffle = width * na.omit(riffle_length)) %>%
   ungroup()

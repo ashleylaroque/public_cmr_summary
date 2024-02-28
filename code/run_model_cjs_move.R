@@ -17,6 +17,7 @@ Fc <- apply(Y, MARGIN = 1, getf) # applies function to get the first occasion
 
 d_jags <- list(Y = Y,                # capture state  
                X = X,                # section midpoint
+               Density = Y3,         # density predictor
                Nind = Nind,          # number of individuals
                Nocc = Nocc,          # occasion 1-14
                Fc = Fc,              # get first occasion
