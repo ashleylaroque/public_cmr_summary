@@ -63,14 +63,14 @@ fmat <- apply(Y2, MARGIN = 1, FUN = get_nonna)
 # density for target species across occasion and section
 ft_density <- df_density %>% # from 'format_movement'
   select(occasion, section, species, d) %>% 
-  subset(species == "bluehead_chub") %>% # select only bluehead chubs
   filter(!is.na(species)) %>% #remove sections with no fish by filtering species for NA
-  spread(occasion, d) 
+  spread(occasion, d)
 
 ft_density <- data.frame(lapply(ft_density, function(x) {replace(x, is.na(x), 0 )}))
 
 
  Y3 <- ft_density %>% 
+   subset(species == "bluehead_chub") %>% # select only bluehead chubs
    select(-c(species, section)) %>% 
    data.matrix()
 

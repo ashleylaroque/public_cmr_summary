@@ -41,8 +41,8 @@ model {
   
   ## if you want to model the effects of predictors, make sd_x as a function of predictors
   ## e.g., log(sd_x) <- alpha + beta * size[i, t]
-  sd_x ~ dunif(0, 1000) # constraint for movement (1000 comes from study reach being 430 so logically the number must be larger than the absolute max value)
-  tau_x <- pow(sd_x, -2)  # variance for movement
+ # sd_x ~ dunif(0, 1000) # constraint for movement (1000 comes from study reach being 430 so logically the number must be larger than the absolute max value)
+ # tau_x <- pow(sd_x, -2)  # variance for movement
   sd_eps ~ dunif(0, 10) # constraint for temporal variation
   tau_eps <- pow(sd_eps, -2) # variance for temporal variation
   alpha ~ dunif(0, 1) # do these need to be in a for loop for time and individual variation?

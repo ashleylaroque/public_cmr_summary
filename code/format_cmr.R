@@ -192,7 +192,9 @@ df_t <- df0 %>%
            section,
            occasion) %>% 
   summarize(abundance = n()) %>% 
-  ungroup()
+  ungroup() 
+
+
 
 
 # Format Non-Target Data --------------------------------------------------

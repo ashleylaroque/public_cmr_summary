@@ -3392,15 +3392,15 @@ Date,Occasion,Section,Species,Length,Comment
 11/11/2023,13,5,LMB,130,
 11/11/2023,13,5,LMB,72,
 11/11/2023,13,6,LMB,80,
-11/11/2023,13,7,NA,NA,
-11/11/2023,13,8,PAT,53,
+11/11/2023,13,7,NA,NA,NO FISH
+11/11/2023,13,8,DAT,53,AL 2/28/24 corrected species id
 11/11/2023,13,8,CRC,55,
 11/11/2023,13,9,CRC,56,
 11/11/2023,13,9,CRC,57,
 11/11/2023,13,9,CRC,55,
 11/11/2023,13,9,BHC,45,
 11/11/2023,13,9,BHC,55,
-11/11/2023,13,9,PAT,52,
+11/11/2023,13,9,DAT,52,AL 2/28/24 corrected species id
 11/11/2023,13,10,WAR,126,
 11/11/2023,13,10,DAT,76,
 11/11/2023,13,10,LMB,57,
@@ -3468,7 +3468,7 @@ Date,Occasion,Section,Species,Length,Comment
 4/10/2024,14,3,DAT,55,
 4/10/2024,14,3,BHC,37,
 4/10/2024,14,3,CRC,52,
-4/10/2024,14,4,N/A,N/A,NO FISH
+4/10/2024,14,4,NA,NA,NO FISH
 4/10/2024,14,5,DAT,55,
 4/10/2024,14,5,DAT,36,
 4/10/2024,14,5,DAT,59,
@@ -3494,7 +3494,7 @@ Date,Occasion,Section,Species,Length,Comment
 4/10/2024,14,10,DAT,307,
 4/10/2024,14,10,EMF,67,
 4/10/2024,14,10,CRC,55,
-4/10/2024,14,11,N/A,N/A,NO FISH
+4/10/2024,14,11,NA,NA,NO FISH
 4/10/2024,14,12,DAT,55,
 4/10/2024,14,13,EMF,75,
 4/10/2024,14,13,DAT,51,
@@ -3581,34 +3581,34 @@ Date,Occasion,Section,Species,Length,Comment
 4/10/2024,14,24,CRC,55,
 4/10/2024,14,24,DAT,49,
 4/10/2024,14,24,DAT,37,
-4/10/2024,14,25+26,CRC,55,
-4/10/2024,14,25+26,CRC,55,
-4/10/2024,14,25+26,CRC,53,
-4/10/2024,14,25+26,CRC,42,
-4/10/2024,14,25+26,CRC,42,
-4/10/2024,14,25+26,CRC,40,
-4/10/2024,14,25+26,CRC,50,
-4/10/2024,14,25+26,CRC,45,
-4/10/2024,14,25+26,CRC,40,
-4/10/2024,14,25+26,CRC,55,
-4/10/2024,14,25+26,CRC,35,
-4/10/2024,14,25+26,CRC,40,
-4/10/2024,14,25+26,CRC,56,
-4/10/2024,14,25+26,DAT,55,
-4/10/2024,14,25+26,DAT,60,
-4/10/2024,14,25+26,DAT,55,
-4/10/2024,14,25+26,DAT,56,
-4/10/2024,14,25+26,DAT,62,
-4/10/2024,14,25+26,DAT,65,
-4/10/2024,14,25+26,BHC,52,
-4/10/2024,14,25+26,GSF,56,
+4/10/2024,14,26,CRC,55,combined with section 25 due to missing a flag marker
+4/10/2024,14,26,CRC,55,combined with section 25 due to missing a flag marker
+4/10/2024,14,26,CRC,53,combined with section 25 due to missing a flag marker
+4/10/2024,14,26,CRC,42,combined with section 25 due to missing a flag marker
+4/10/2024,14,26,CRC,42,combined with section 25 due to missing a flag marker
+4/10/2024,14,26,CRC,40,combined with section 25 due to missing a flag marker
+4/10/2024,14,26,CRC,50,combined with section 25 due to missing a flag marker
+4/10/2024,14,26,CRC,45,combined with section 25 due to missing a flag marker
+4/10/2024,14,26,CRC,40,combined with section 25 due to missing a flag marker
+4/10/2024,14,26,CRC,55,combined with section 25 due to missing a flag marker
+4/10/2024,14,26,CRC,35,combined with section 25 due to missing a flag marker
+4/10/2024,14,26,CRC,40,combined with section 25 due to missing a flag marker
+4/10/2024,14,26,CRC,56,combined with section 25 due to missing a flag marker
+4/10/2024,14,26,DAT,55,combined with section 25 due to missing a flag marker
+4/10/2024,14,26,DAT,60,combined with section 25 due to missing a flag marker
+4/10/2024,14,26,DAT,55,combined with section 25 due to missing a flag marker
+4/10/2024,14,26,DAT,56,combined with section 25 due to missing a flag marker
+4/10/2024,14,26,DAT,62,combined with section 25 due to missing a flag marker
+4/10/2024,14,26,DAT,65,combined with section 25 due to missing a flag marker
+4/10/2024,14,26,BHC,52,combined with section 25 due to missing a flag marker
+4/10/2024,14,26,GSF,56,combined with section 25 due to missing a flag marker
 4/10/2024,14,27,DAT,61,
 4/10/2024,14,27,DAT,31,
 4/10/2024,14,27,BHC,41,
 4/10/2024,14,27,BHC,39,
 4/10/2024,14,27,BHC,39,
-4/10/2024,14,27,CHC,47,
-4/10/2024,14,27,CHC,52,
+4/10/2024,14,27,CRC,47,AL 2/28/24 corrected species id
+4/10/2024,14,27,CRC,52,AL 2/28/24 corrected species id
 4/10/2024,14,28,DAT,52,
 4/10/2024,14,28,DAT,37,
 4/10/2024,14,28,GSF,59,
@@ -3629,9 +3629,9 @@ Date,Occasion,Section,Species,Length,Comment
 4/10/2024,14,30,DAT,60,
 4/10/2024,14,30,DAT,65,
 4/10/2024,14,31,BHC,59,
-4/10/2024,14,31,CHC,49,
-4/10/2024,14,31,CHC,51,
-4/10/2024,14,32,CHC,51,
+4/10/2024,14,31,CRC,49,AL 2/28/24 corrected species id
+4/10/2024,14,31,CRC,51,AL 2/28/24 corrected species id
+4/10/2024,14,32,CRC,51,AL 2/28/24 corrected species id
 4/10/2024,14,32,DAT,31,
 4/10/2024,14,32,DAT,50,
 4/10/2024,14,32,DAT,56,
@@ -3648,7 +3648,7 @@ Date,Occasion,Section,Species,Length,Comment
 4/10/2024,14,34,CRC,45,
 4/10/2024,14,34,CCS,123,
 4/10/2024,14,34,CCS,106,
-4/10/2024,14,35,N/A,N/A,NO FISH
+4/10/2024,14,35,NA,NA,NO FISH
 4/10/2024,14,36,CCS,108,
 4/10/2024,14,36,DAT,55,
 4/10/2024,14,37,DAT,72,
