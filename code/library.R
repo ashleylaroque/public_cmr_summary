@@ -5,7 +5,8 @@ pacman::p_load(tidyverse,
                PerformanceAnalytics,
                grid,
                ggh4x,
-               gtable)
+               gtable,
+               googledrive)
 
 
 # command + shift + C to comment out multiple lines 

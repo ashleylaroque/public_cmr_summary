@@ -60,15 +60,20 @@ fmat <- apply(Y2, MARGIN = 1, FUN = get_nonna)
 # Format Density Matrix ---------------------------------------------------
 
 # Format Data with density over all occasions
+df_d <- df_density %>% # from 'format_movement'
+  select(occasion, section, species, d, n) %>% 
+  uncount(n)
+  
 # density for target species across occasion and section
-ft_density <- df_density %>% # from 'format_movement'
+ft_density <- df_d %>% 
   select(occasion, section, species, d) %>% 
-  filter(!is.na(species)) %>% #remove sections with no fish by filtering species for NA
-  spread(occasion, d)
+  pivot_wider(names_from = occasion, 
+              values_from = d, 
+              values_fn = list) 
 
 ft_density <- data.frame(lapply(ft_density, function(x) {replace(x, is.na(x), 0 )}))
 
-
+#if multiple individuals i in the same section, you have to give the same density number for those individuals
  Y3 <- ft_density %>% 
    subset(species == "bluehead_chub") %>% # select only bluehead chubs
    select(-c(species, section)) %>% 

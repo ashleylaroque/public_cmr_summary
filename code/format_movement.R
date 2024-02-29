@@ -10,16 +10,19 @@ source(here::here("code/format_habitat.R"))
 
 # combine non-target, habitat, and tagged data sets and calculate density
 df_density <- df_h_sec %>% #df with all habitat data
-  left_join(df_t, #df with cmr fish abundance data
+  left_join(df_nt, #df with cmr fish abundance data
             by = c("section", "occasion")) %>%
-  left_join(df_nt, #df with all non-target fish data
-            by = c("species", "section", "occasion")) %>%
-  rowwise() %>%
-  mutate(n = sum(c(abundance.x, abundance.y), # abundance (x and y are from cmr and non target) = n
-                 na.rm = TRUE),
+  left_join(df_t, #df with all non-target fish data
+            by = c("species", "section", "occasion")) %>% 
+  rowwise() %>% 
+  mutate(abundance.x = ifelse(is.na(abundance.x), 0, abundance.x),
+         abundance.y = ifelse(is.na(abundance.y), 0, abundance.y), 
+         n = sum(c(abundance.x, abundance.y), # abundance (x and y are from cmr and non target) = n
+                na.rm = F),
          d = n / area) %>% # density (d) = abundance per area
   select(-c(abundance.x, abundance.y)) %>% 
   arrange(occasion, section)
+
 
 #density for target species across occasion and section
 df_density_wide <- df_density %>% 

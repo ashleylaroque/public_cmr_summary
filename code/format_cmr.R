@@ -24,11 +24,26 @@ df_cmr <- data %>%
                    site,
                    `vial_#`)) %>% # remove extraneous columns
   rename(tag = tag_id2) %>%  # change column name
-  drop_na(tag) %>% #omit NA values
-  filter(mortality == "n") %>% #filter out moralities 
   mutate(f_occasion = paste0("occ", occasion))  #add column to make occasions into characters
 
+# separate na values for merging later to calculate density including NA
+df_na <- df_cmr %>% # for use to merge for density 
+  filter(is.na(species)) %>% 
+#  mutate(date = as.Date(date, format = "%m/%d/%Y"), # data type change: date column
+#         julian = julian(date)) %>% 
+  select(occasion, section, species, length) %>% 
+  group_by(occasion, section, species) %>% 
+  summarize(abundance = n()) %>% 
+  ungroup() %>% 
+  mutate(abundance = ifelse(abundance == 1, 0, abundance))
 
+
+
+df_cmr <- df_cmr  %>% #filter out moralities 
+  drop_na(tag) %>%  #omit NA values
+  filter(mortality == "n")
+  
+  
 
 # Check Data --------------------------------------------------------------
 
@@ -42,10 +57,10 @@ error_id <- df_cmr %>%
   filter(n_species > 1) %>%                         #duplicate tags extracted
   pull(tag)
 
-df_cmr %>% 
-  filter(tag %in% error_id) %>%     #filters out the tags from error_id
-  arrange(tag) %>%                  #each tag should have the same species throughout occasions
-  view()
+# df_cmr %>% 
+#   filter(tag %in% error_id) %>%     #filters out the tags from error_id
+#   arrange(tag) %>%                  #each tag should have the same species throughout occasions
+#   view()
 
 # check length / weight relationship (visual)
 ggplot(df_cmr, aes(x = length , y = weight, color = f_occasion)) +
@@ -152,12 +167,11 @@ ggplot(df0) +
 df0 <- df0 %>% #df0 is after outlier correction
   mutate(date = as.Date(date, format = "%m/%d/%Y"), # data type change: date column
          julian = julian(date)) %>% # julian date because R wont recognize other date formats for gathering earliest occurance
-  drop_na(species) %>% 
   group_by(tag, occasion) %>% # group by tag and occasion
   slice(which.min(date)) %>% # pick the first capture in each occasion
   ungroup()
 
-write.csv(df0, file = "formatted_cmr.csv", row.names = F)
+write.csv(df0, file = "data_formatted/formatted_cmr.csv", row.names = F)
 
 df_wide <- df0 %>% 
   pivot_wider(id_cols = c(tag, species),
@@ -192,9 +206,8 @@ df_t <- df0 %>%
            section,
            occasion) %>% 
   summarize(abundance = n()) %>% 
-  ungroup() 
-
-
+  ungroup() %>% 
+  rbind(df_na)  # bind NA values for density calculation
 
 
 # Format Non-Target Data --------------------------------------------------
@@ -208,7 +221,7 @@ drive_download("data_non_target_workingcopy",
 df_nt <- read_csv(here::here("data_raw/data_non_target.csv")) %>% 
   rename_at(vars(everything()),
             .funs = str_to_lower) %>% # make all column headers lowercase
-  drop_na(species) %>% #omit cells that have an NA
+ # drop_na(species) %>% #omit cells that have an NA
   mutate(species = case_when(species == "BHC" ~ "bluehead_chub",
                              species == "BLG" ~ "bluegill",
                              species == "CCS" ~ "creekchub_sucker",
@@ -227,8 +240,8 @@ df_nt <- read_csv(here::here("data_raw/data_non_target.csv")) %>%
                              species == "STJ" ~ "striped_jumprock",
                              species == "WAR" ~ "warmouth",
                              species == "YB" ~ "yellow_bullhead")) %>% 
-  group_by(species, section, occasion) %>% 
+  group_by(occasion, section, species) %>% 
   summarize(abundance = n()) %>% 
-  ungroup()
-
+  ungroup() %>% 
+  mutate(abundance = ifelse(is.na(species), 0, abundance))
 
