@@ -10,9 +10,9 @@ source(here::here("code/format_habitat.R"))
 
 # combine non-target, habitat, and tagged data sets and calculate density
 df_density <- df_h_sec %>% #df with all habitat data
-  left_join(df_nt, #df with cmr fish abundance data
+  left_join(df_non_target, #df with cmr fish abundance data
             by = c("section", "occasion")) %>%
-  left_join(df_t, #df with all non-target fish data
+  left_join(df_target, #df with all non-target fish data
             by = c("species", "section", "occasion")) %>% 
   rowwise() %>% 
   mutate(abundance.x = ifelse(is.na(abundance.x), 0, abundance.x),
@@ -35,11 +35,11 @@ df_density_wide <- df_density %>%
 
 # merge all density and fish info data
 df_m <- df_interval %>% #cmr data formatted with cap/recap intervals
-  left_join(df0, #cmr data with length, weight, tag, etc
+  left_join(df1, #cmr data with length, weight, tag, etc
             by = c("tag",
                    "species",
                    "occasion_cap" = "occasion")) %>%
-  left_join(df0,
+  left_join(df1,
             suffix = c("_cap", "_recap"),
             by = c("tag",
                    "species",
@@ -74,11 +74,11 @@ df_occ_move <- df_move %>%
 ## the following df_mo needs to be checked when joining df_density (habitat data)
 # Calculate movement and emigration with density
 df_mo <- df_interval %>% 
-  left_join(df0,
+  left_join(df1,
             by = c("tag",
                    "species",
                    "occasion_cap" = "occasion")) %>%
-  left_join(df0,
+  left_join(df1,
             suffix = c("_cap", "_recap"),
             by = c("tag",
                    "species",

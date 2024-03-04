@@ -23,7 +23,7 @@ d_jags <- list(Y = Y,                # capture state
                Fc = Fc,              # get first occasion
                L = 430)              # length of study reach
 
-para <- c("mean.phi", "mean.p", "sd_x")
+para <- c("mean.phi", "mean.p", "alpha", "beta")
 
 # mcmc setup --------------------------------------------------------------
 

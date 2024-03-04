@@ -26,24 +26,20 @@ df_cmr <- data %>%
   rename(tag = tag_id2) %>%  # change column name
   mutate(f_occasion = paste0("occ", occasion))  #add column to make occasions into characters
 
+
 # separate na values for merging later to calculate density including NA
-df_na <- df_cmr %>% # for use to merge for density 
-  filter(is.na(species)) %>% 
-#  mutate(date = as.Date(date, format = "%m/%d/%Y"), # data type change: date column
-#         julian = julian(date)) %>% 
-  select(occasion, section, species, length) %>% 
-  group_by(occasion, section, species) %>% 
-  summarize(abundance = n()) %>% 
-  ungroup() %>% 
-  mutate(abundance = ifelse(abundance == 1, 0, abundance))
+ df_na <- df_cmr %>% # for use to merge for density
+   filter(is.na(species)) %>%
+   mutate(date = as.Date(date, format = "%m/%d/%Y"), # data type change: date column
+         julian = julian(date)) 
 
 
-
-df_cmr <- df_cmr  %>% #filter out moralities 
+# separate non-na for outlier correction
+df_cmr <- df_cmr  %>% #filter out moralities
   drop_na(tag) %>%  #omit NA values
   filter(mortality == "n")
-  
-  
+
+
 
 # Check Data --------------------------------------------------------------
 
@@ -164,16 +160,17 @@ ggplot(df0) +
 # Calculate intervals for movement and merging ------------------------------------------------------
 
 ## prepare data for merging with non-target and habitat data
-df0 <- df0 %>% #df0 is after outlier correction
+df1 <- df0 %>% #df0 is after outlier correction
   mutate(date = as.Date(date, format = "%m/%d/%Y"), # data type change: date column
          julian = julian(date)) %>% # julian date because R wont recognize other date formats for gathering earliest occurance
   group_by(tag, occasion) %>% # group by tag and occasion
   slice(which.min(date)) %>% # pick the first capture in each occasion
-  ungroup()
+  ungroup() %>% 
+  rbind(df_na) # bind with na values 
 
-write.csv(df0, file = "data_formatted/formatted_cmr.csv", row.names = F)
+write.csv(df1, file = "data_formatted/formatted_cmr.csv", row.names = F)
 
-df_wide <- df0 %>% 
+df_wide <- df1 %>% 
   pivot_wider(id_cols = c(tag, species),
               names_from = occasion,
               values_from = c(length, weight, julian),
@@ -200,14 +197,23 @@ df_interval <- df_wide %>%
            occasion_cap,
            occasion_recap)
 
+
 ## abundance of tagged individuals per section per occasion
-df_t <- df0 %>% 
+df_t <- df1 %>% 
   group_by(species,
            section,
            occasion) %>% 
   summarize(abundance = n()) %>% 
-  ungroup() %>% 
-  rbind(df_na)  # bind NA values for density calculation
+  ungroup() 
+
+# abundance of tagged individuals including NA/0's
+df_target <- with(df1, 
+     expand.grid(occasion = sort(unique(occasion)),
+                 section = seq(1, 43, by = 1),
+                 species = sort(unique(species)))) %>% 
+  as_tibble() %>% 
+  left_join(df_t, by = c("occasion", "section", "species")) %>% 
+  mutate(abundance = ifelse(is.na(abundance), 0, abundance))
 
 
 # Format Non-Target Data --------------------------------------------------
@@ -218,10 +224,11 @@ drive_download("data_non_target_workingcopy",
                overwrite = T )
 
 # read data
+
+# transform data into abundance for each species per occasion per section
 df_nt <- read_csv(here::here("data_raw/data_non_target.csv")) %>% 
   rename_at(vars(everything()),
             .funs = str_to_lower) %>% # make all column headers lowercase
- # drop_na(species) %>% #omit cells that have an NA
   mutate(species = case_when(species == "BHC" ~ "bluehead_chub",
                              species == "BLG" ~ "bluegill",
                              species == "CCS" ~ "creekchub_sucker",
@@ -242,6 +249,15 @@ df_nt <- read_csv(here::here("data_raw/data_non_target.csv")) %>%
                              species == "YB" ~ "yellow_bullhead")) %>% 
   group_by(occasion, section, species) %>% 
   summarize(abundance = n()) %>% 
-  ungroup() %>% 
-  mutate(abundance = ifelse(is.na(species), 0, abundance))
+  ungroup() 
+
+
+# abundance of tagged individuals including NA/0's
+df_non_target <- with(df_nt, 
+                  expand.grid(occasion = sort(unique(occasion)),
+                              section = seq(1, 43, by = 1),
+                              species = sort(unique(species)))) %>% 
+  as_tibble() %>% 
+  left_join(df_nt, by = c("occasion", "section", "species")) %>% 
+  mutate(abundance = ifelse(is.na(abundance), 0, abundance))
 

@@ -3394,7 +3394,7 @@ Occasion,Date,Time,Tag_ID,Tag_ID2,Site,Species,Section,Length,Weight,Recap,Morta
 14,2/10/2024,14:42:50.901,900.226001340454,ID900.226001340454,NorthCampus_CMR,green_sunfish,32,102,17.6,n,n,n,y,n,NA,,
 14,2/10/2024,14:45:49.696,900.226001698089,ID900.226001698089,NorthCampus_CMR,creek_chub,32,81,6.9,y,n,n,y,n,NA,,
 14,2/10/2024,14:47:46.172,900.226001697785,ID900.226001697785,NorthCampus_CMR,striped_jumprock,32,81,6.1,y,n,n,y,n,NA,,
-14,2/10/2024,14:52:39.226,900.226001340473,N,NorthCampus_CMR,creek_chub,32,86,4.6,n,n,y,n,y,14.137,,2/14/24 AL cannot correct off photo
+14,2/10/2024,14:52:39.226,900.226001340473,ID900.226001340473,NorthCampus_CMR,creek_chub,32,86,4.6,n,n,y,n,y,14.137,,2/14/24 AL cannot correct off photo
 14,2/10/2024,15:04:52.389,900.226001340462,ID900.226001340462,NorthCampus_CMR,bluehead_chub,33,84,5.9,n,n,y,n,y,14.104,,
 14,2/10/2024,15:25:03.334,900.226001340495,ID900.226001340495,NorthCampus_CMR,striped_jumprock,34,100,9.7,n,n,y,n,y,14.113,,
 14,2/10/2024,15:27:08.125,900.226001340414,ID900.226001340414,NorthCampus_CMR,striped_jumprock,34,86,6,n,n,y,n,y,14.186,,
