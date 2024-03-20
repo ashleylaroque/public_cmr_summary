@@ -17,13 +17,40 @@ df2 <- read_csv(here::here("data_formatted/formatted_cmr.csv")) %>%
 
 ## convert the data into matrix format
 ## replace NA with zero
+# Y <- df2 %>% 
+#   pivot_wider(id_cols = tag,
+#               names_from = occasion,
+#               values_from = section,
+#               values_fn = function(x) !is.na(x)) %>% 
+#   dplyr::select(-tag) %>% 
+#   data.matrix()
+
+# generate movement 
 Y <- df2 %>% 
-  pivot_wider(id_cols = tag,
+  mutate(tag_index = as.numeric(as.factor(tag))) %>% 
+  arrange(tag_index, occasion) %>% 
+  relocate(tag_index, occasion) %>% 
+  mutate(x = section * 10 - 5)
+
+#create vectorized movement format
+Y <- Y %>% 
+  pivot_wider(id_cols = tag_index,
               names_from = occasion,
-              values_from = section,
-              values_fn = function(x) !is.na(x)) %>% 
-  dplyr::select(-tag) %>% 
-  data.matrix()
+              values_from = section) %>% 
+  pivot_longer(cols = -tag_index,
+               names_to = "occasion",
+               values_to = "y") %>% 
+  mutate(y = ifelse(is.na(y), 0, 1),
+         occasion = as.numeric(occasion)) %>% 
+  arrange(tag_index, occasion)
+
+# create first capture vector 
+fc <- df %>% 
+  group_by(tag_index) %>% 
+  filter(y == 1) %>% 
+  slice(which.min(occasion)) %>% 
+  ungroup() %>% 
+  arrange(tag_index)
 
 Y[is.na(Y)] <- 0  
 
@@ -95,6 +122,17 @@ ft <- data.frame(lapply(ft, function(x) {replace(x, is.na(x), 0 )}))
  Y3 <- ft %>% 
    select(-c(tag, section)) %>% 
    data.matrix()
+ 
+# create vectorized format
+ 
+ 
+ # create first capture vector 
+ fc <- df %>% 
+   group_by(tag_index) %>% 
+   filter(y == 1) %>% 
+   slice(which.min(occasion)) %>% 
+   ungroup() %>% 
+   arrange(tag_index)
 
 
 # Format Size Matrix ------------------------------------------------------
