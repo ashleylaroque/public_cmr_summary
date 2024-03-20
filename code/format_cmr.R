@@ -2,7 +2,7 @@
 # Ashley LaRoque
 # Format CMR Data 
 
-
+source(here::here("code/library.R"))
 
 # Read Data ---------------------------------------------------------------
 drive_download("data_cmr_master_workingcopy", 
@@ -26,8 +26,7 @@ df_cmr <- data %>%
   rename(tag = tag_id2) %>%  # change column name
   mutate(f_occasion = paste0("occ", occasion))  #add column to make occasions into characters
 
-
-# separate na values for merging later to calculate density including NA
+# separate na values for merging later (to calculate density including NA)
  df_na <- df_cmr %>% # for use to merge for density
    filter(is.na(species)) %>%
    mutate(date = as.Date(date, format = "%m/%d/%Y"), # data type change: date column
@@ -165,18 +164,18 @@ df1 <- df0 %>% #df0 is after outlier correction
          julian = julian(date)) %>% # julian date because R wont recognize other date formats for gathering earliest occurance
   group_by(tag, occasion) %>% # group by tag and occasion
   slice(which.min(date)) %>% # pick the first capture in each occasion
-  ungroup() %>% 
-  rbind(df_na) # bind with na values 
+  ungroup() 
 
-write.csv(df1, file = "data_formatted/formatted_cmr.csv", row.names = F)
+write.csv(df1, file = "data_formatted/formatted_cmr.csv", row.names = F) # does not include NA
 
+# make data into wide format to calculate differences 
 df_wide <- df1 %>% 
   pivot_wider(id_cols = c(tag, species),
               names_from = occasion,
               values_from = c(length, weight, julian),
               names_sort = TRUE)
 
-## julian data - calculate interval
+## Calculate time interval using Julian date
 df_interval <- df_wide %>% 
   select(starts_with("julian")) %>% 
   purrrlyr::by_row(lift_vl(diff),
@@ -197,9 +196,12 @@ df_interval <- df_wide %>%
            occasion_cap,
            occasion_recap)
 
+# bind NA values with formatted CMR values (df1)
+df2 <- df1 %>% 
+  rbind(df_na) # bind with na values 
 
-## abundance of tagged individuals per section per occasion
-df_t <- df1 %>% 
+# abundance of tagged individuals per section per occasion
+df_t <- df2 %>% 
   group_by(species,
            section,
            occasion) %>% 
@@ -207,7 +209,7 @@ df_t <- df1 %>%
   ungroup() 
 
 # abundance of tagged individuals including NA/0's
-df_target <- with(df1, 
+df_target <- with(df2, 
      expand.grid(occasion = sort(unique(occasion)),
                  section = seq(1, 43, by = 1),
                  species = sort(unique(species)))) %>% 

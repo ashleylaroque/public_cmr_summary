@@ -45,8 +45,8 @@ model {
  # tau_x <- pow(sd_x, -2)  # variance for movement
   sd_eps ~ dunif(0, 10) # constraint for temporal variation
   tau_eps <- pow(sd_eps, -2) # variance for temporal variation
-  alpha ~ dunif(0, 1) 
-  beta ~ dunif(0, 1) 
+  alpha ~ dnorm(0, 0.01) 
+  beta ~ dnorm(0, 0.01) 
   
   ## likelihood
   for (i in 1:Nind) {

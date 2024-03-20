@@ -85,6 +85,20 @@ fmat <- apply(Y2, MARGIN = 1, FUN = get_nonna)
 
 
 # Format Density Matrix ---------------------------------------------------
+# combine non-target, habitat, and tagged data sets and calculate density
+df_density <- df_h_sec %>% #df with all habitat data
+  left_join(df_non_target, #df with cmr fish abundance data
+            by = c("section", "occasion")) %>%
+  left_join(df_target, #df with all non-target fish data
+            by = c("species", "section", "occasion")) %>% 
+  rowwise() %>% 
+  mutate(abundance.x = ifelse(is.na(abundance.x), 0, abundance.x),
+         abundance.y = ifelse(is.na(abundance.y), 0, abundance.y), 
+         n = sum(c(abundance.x, abundance.y), # abundance (x and y are from cmr and non target) = n
+                 na.rm = F),
+         d = n / area) %>% # density (d) = abundance per area
+  select(-c(abundance.x, abundance.y)) %>% 
+  arrange(occasion, section) 
 
 # separate abundance values of 0 
 df_d <- df_density %>% # from 'format_movement'
@@ -99,7 +113,7 @@ ft_density <- df_density %>%
   rbind(df_d) # bind 0 and non-zero data together
 
 # join with tag_id info for movement connection
-df3 <- df1 %>% # from 'format_cmr'
+df3 <- df2 %>% # from 'format_cmr'
   select(occasion, section, species, tag, length, weight, julian) %>% 
   group_by(occasion, tag) %>% 
   slice(which.max(section)) %>% 

@@ -6,63 +6,60 @@ pacman:: p_load(tidyverse,
                 visreg,
                 lattice,
                 sjPlot, 
-                ggplot2)
-library(sjlabelled)
-library(sjmisc)
+                ggplot2,
+                sjlabelled,
+                sjmisc)
 
-#load data to be clear what files are being used 
-# new_move <- read_csv("./data_formatted/data_log_movement_fmt.csv")
-# hab_fmt <- read_csv("./data_formatted/data_habitat_fmt.csv")
 
 # NMDS --------------------------------------------------------------------
 
 
-#' - NMDS species abundance 
-# use df_abundance2 from format_habitat_data
-df_abundance1 <- df_abundance2 %>% 
-  select(creek_chub, bluehead_chub, green_sunfish, redbreast_sunfish)
-
-# get rid of rows with all zeros in fish abundance columns
-df_abundance1 <- df_abundance1[-c(30, 62, 182, 192, 224:259),]
-df_abundance1 <- df_abundance1[-c(179, 188),]
-#select just fish abundance columns 
-df_abundance3 <- df_abundance1 %>% 
-  ungroup() %>% 
-  select(creek_chub, bluehead_chub, green_sunfish, redbreast_sunfish) 
-
-# Remove rows with all 0s
-df_abundance3<- df_abundance3[rowSums(df_abundance3[])>0,]
-
-
-# create NMDS 
-veg_abund <- vegdist(df_abundance3, method= "bray")
-  
-fish.nmds <- metaMDS(veg_abund, distance = 'bray', 
-                         k = 3, trymax = 500, maxit= 999, autotransform = FALSE)
-fish.nmds
-capture.output(fish.nmds, file= "./output/fish_nmds.txt")
-
-# plot NMDS axis 1 and 2
-cols = c(sample(colours(), 43))
-p <- ordiplot(fish.nmds, choices = c(1, 2), display = 'sites')
-ordihull(p, groups = as.factor(df_abundance1$section), conf = 0.95, col = cols)
-
-# plot NMDS axis 2 and 3
-p_23 <- ordiplot(fish.nmds, choices = c(2, 3), display = 'sites')
-ordihull(p_23, groups = as.factor(df_abundance1$section), conf = 0.95, col = cols)
-
-# plot NMDS axis 1 and 3
-p_13 <- ordiplot(fish.nmds, choices = c(1, 3), display = 'sites')
-ordihull(p_13, groups = as.factor(df_abundance1$section), conf = 0.95, col = cols)
-
-# test for community difference
-y.anosim <- anosim(veg_abund, df_abundance1$section) #ANOSIM
-summary(y.anosim)
-
-y.adonis <- adonis(df_abundance3 ~ section, data = df_abundance1, permutations = 1000, method = 'bray') # PERMANOVA
-y.adonis
-
-
+#' #' - NMDS species abundance 
+#' # use df_abundance2 from format_habitat_data
+#' df_abundance1 <- df_abundance2 %>% 
+#'   select(creek_chub, bluehead_chub, green_sunfish, redbreast_sunfish)
+#' 
+#' # get rid of rows with all zeros in fish abundance columns
+#' df_abundance1 <- df_abundance1[-c(30, 62, 182, 192, 224:259),]
+#' df_abundance1 <- df_abundance1[-c(179, 188),]
+#' #select just fish abundance columns 
+#' df_abundance3 <- df_abundance1 %>% 
+#'   ungroup() %>% 
+#'   select(creek_chub, bluehead_chub, green_sunfish, redbreast_sunfish) 
+#' 
+#' # Remove rows with all 0s
+#' df_abundance3<- df_abundance3[rowSums(df_abundance3[])>0,]
+#' 
+#' 
+#' # create NMDS 
+#' veg_abund <- vegdist(df_abundance3, method= "bray")
+#'   
+#' fish.nmds <- metaMDS(veg_abund, distance = 'bray', 
+#'                          k = 3, trymax = 500, maxit= 999, autotransform = FALSE)
+#' fish.nmds
+#' capture.output(fish.nmds, file= "./output/fish_nmds.txt")
+#' 
+#' # plot NMDS axis 1 and 2
+#' cols = c(sample(colours(), 43))
+#' p <- ordiplot(fish.nmds, choices = c(1, 2), display = 'sites')
+#' ordihull(p, groups = as.factor(df_abundance1$section), conf = 0.95, col = cols)
+#' 
+#' # plot NMDS axis 2 and 3
+#' p_23 <- ordiplot(fish.nmds, choices = c(2, 3), display = 'sites')
+#' ordihull(p_23, groups = as.factor(df_abundance1$section), conf = 0.95, col = cols)
+#' 
+#' # plot NMDS axis 1 and 3
+#' p_13 <- ordiplot(fish.nmds, choices = c(1, 3), display = 'sites')
+#' ordihull(p_13, groups = as.factor(df_abundance1$section), conf = 0.95, col = cols)
+#' 
+#' # test for community difference
+#' y.anosim <- anosim(veg_abund, df_abundance1$section) #ANOSIM
+#' summary(y.anosim)
+#' 
+#' y.adonis <- adonis(df_abundance3 ~ section, data = df_abundance1, permutations = 1000, method = 'bray') # PERMANOVA
+#' y.adonis
+#' 
+#' 
 
 
 # GLMM ---------------------------------------------------------
@@ -73,7 +70,7 @@ f_species <- c("green_sunfish",
                "bluehead_chub",
                "striped_jumprock")
 
-# Weight as predictor
+# Absolute movement predicted by weight and density 
 mm <- lapply(1:length(f_species), function(i) {
   
   lmer(move_abs ~ scale(weight_cap) +
@@ -93,7 +90,8 @@ mm$creek_chub
 mm$green_sunfish
 mm$redbreast_sunfish
 
-# Density as predictor
+
+# Log distance pre
 mm1 <- lapply(1:length(f_species), function(i) {
   
   lmer(log_dist ~ tr_cyp + tr_cent + tr_other +
@@ -168,8 +166,6 @@ AIC(mm3$bluehead_chub)
 
 # GLM ---------------------------------------------------------------------
 
-# include habitat variable and see what may changes (undercut)
-
 # GLM both weight and density
 list_m <- lapply(1:length(f_species), function(i) {
 
@@ -189,7 +185,7 @@ names(list_m) <- f_species
 lapply(list_m, summary)
 
 
-# GLM density 
+# GLM just density 
 list_m <- lapply(1:length(f_species), function(i) {
   
   glm(emigration ~
@@ -206,7 +202,7 @@ list_m <- lapply(1:length(f_species), function(i) {
 names(list_m) <- f_species
 lapply(list_m, summary)
 
-# GLM weight 
+# GLM just weight 
 list_m <- lapply(1:length(f_species), function(i) {
   
   glm(emigration ~
