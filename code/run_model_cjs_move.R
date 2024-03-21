@@ -7,12 +7,12 @@ source("code/library.R")
 source("code/function.R")
 source("code/setup_cjs.R")
 
-Nind <- nrow(Y2) # length (#) of individuals
-Nocc <- ncol(Y2) # width (#) of occasions
-X <- Y2 * 10 - 5 # calculates midpoint of section
-Y <- apply(Y2, 1, FUN = function(x) ifelse(is.na(x), 0, 1)) %>% # calculate capture state
+Nind <- nrow(Y) # length (#) of individuals
+Nocc <- ncol(Y) # width (#) of occasions
+#X <- Y1 * 10 - 5 # calculates midpoint of section
+#Y <- apply(Y2, 1, FUN = function(x) ifelse(is.na(x), 0, 1)) %>% # calculate capture state
   t()
-Fc <- apply(Y, MARGIN = 1, getf) # applies function to get the first occasion 
+#Fc <- apply(Y, MARGIN = 1, getf) # applies function to get the first occasion 
 
 
 d_jags <- list(Y = Y,                # capture state  
