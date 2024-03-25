@@ -1,6 +1,4 @@
-
 # CJS Movement Model 
-
 model {
   
   # Priors
@@ -32,7 +30,7 @@ model {
       
       # Observation process
       mu2[i,t] <- p[i,t - 1] * z[i,t] * xi[i,t]
-      Y[i,t] ~ dbern(mu2[i,t])
+      Ym[i,t] ~ dbern(mu2[i,t])
     } #t
   } #i
   
@@ -42,7 +40,7 @@ model {
   
  # sd_x ~ dunif(0, 1000)       # constraint for movement (1000 comes from study reach being 430 so logically the number must be larger than the absolute max value)
  # tau_x <- pow(sd_x, -2)      # variance for movement
-  sd_eps ~ dunif(0, 10).       # constraint for temporal variation
+  sd_eps ~ dunif(0, 10)        # constraint for temporal variation
   tau_eps <- pow(sd_eps, -2)   # variance for temporal variation
   alpha ~ dnorm(0, 0.01)        
   beta ~ dnorm(0, 0.01)        
@@ -50,24 +48,42 @@ model {
   ## likelihood
   for (i in 1:Nind) {
     for (t in (Fc[i] + 1):Nocc) {
-      X[i, t] ~ dnorm(X[i, t - 1], tau_x[i, t - 1]) # gross movement
+      Xm[i, t] ~ dnorm(Xm[i, t - 1], tau_x[i, t - 1]) # gross movement
       xi[i, t] <- step(s[i, t] - 1.5) # true emigration
-      s[i, t] <- step(L - X[i, t]) + step(X[i, t]) # component to measure emigration (whether they have left up vs downstream)
+      s[i, t] <- step(L - Xm[i, t]) + step(Xm[i, t]) # component to measure emigration (whether they have left up vs downstream)
     
       # density and size predictor   
       tau_x[i, t - 1] <- pow(sd_x[i, t-1], -2) # variance over time and individual from movement contraint over time and individual
-      log(sd_x[i, t - 1]) <- alpha + beta * Density[i, t - 1] * Size[i, t - 1] + eps[i, t - 1] # integrate density and size with a temporal variation parameter
+      log(sd_x[i, t - 1]) <- alpha + beta * Den[Sm[i, t - 1], t - 1] + eps[i, t - 1] # integrate density and size with a temporal variation parameter
+      #log(sd_x[i, t - 1]) <- alpha + eps[i, t - 1] # integrate density and size with a temporal variation parameter
       eps[i, t - 1] ~ dnorm(0, tau_eps) # eps integrates temporal variation
     
     }#t
   }#i
   
-  ## nested model to retrospectively generate missing values 
-  # density: from predicted movement, generate section so that density in that given section can be applied as a predictor
-  # size: fill in missing size values between recapture events based on predicted growth curve 
-  for (i in 1:Nind) {
-    
-    
+  # ## nested model to retrospectively generate missing values 
+  # # density: from predicted movement, generate section so that density in that given section can be applied as a predictor
+  # # size: fill in missing size values between recapture events based on predicted growth curve 
+  # for (i in 1:Nind) {
+  #   
+  #   
+  # }
+  
+}
+
+data {
+  ## reorganize capture-recapture Y
+  for (n in 1:Nobs) {
+    Ym[Id_tag_y[n], Id_occ_y[n]] <- Y[n]
   }
   
+  for (i in 1:Nx) {
+    Xm[Id_tag_x[i], Id_occ_x[i]] <- X[i]
+    Sm[Id_tag_x[i], Id_occ_x[i]] <- Section[i]
+  }
+ 
+  for (j in 1:Nd) {
+    Den[Id_sec_d[j], Id_occ_d[j]] <- Density[j]
+  }
+   
 }

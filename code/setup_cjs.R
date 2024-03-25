@@ -2,7 +2,6 @@
 
 source("code/library.R")
 source("code/function.R")
-source("code/format_movement.R")
 
 # Setup Data ---------------------------------------
 
@@ -11,15 +10,15 @@ df_format <- read_csv(here::here("data_formatted/formatted_cmr.csv")) %>%
             f_occasion,
             date)) %>% 
   group_by(occasion, tag) %>% 
-  sample_n(1) %>% # is to make sure to have one capture per occasion: must be corrected
-  ungroup()
+  slice(which.max(section)) %>% 
+  ungroup() %>% 
+  filter(species == "bluehead_chub")
 
 # generate movement 
 Y0 <- df_format %>% 
   mutate(tag_index = as.numeric(as.factor(tag))) %>% 
   arrange(tag_index, occasion) %>% 
-  relocate(tag_index, occasion) %>% 
-  mutate(x = section * 10 - 5)
+  relocate(tag_index, occasion)
 
 #create vectorized survival format
 Y <- Y0 %>% 
@@ -50,7 +49,9 @@ Y1 <- Y0 %>%
               values_from = section) %>% 
   pivot_longer(cols = -tag_index,
                names_to = "occasion",
-               values_to = "x") %>% 
+               values_to = "section") %>% 
+  mutate(x = 10 * section - 5,
+         occasion = as.numeric(occasion)) %>% 
   arrange(tag_index, occasion)
 
 # first capture occasion- dont think this is necessary because fc is gathered for survial initially
@@ -62,6 +63,9 @@ Y1 <- Y0 %>%
 #   arrange(tag_index)
 
 # Format Density ---------------------------------------------------
+
+source("code/format_movement.R")
+
 # combine non-target, habitat, and tagged data sets and calculate density
 df_density <- df_h_sec %>% #df with all habitat data
   left_join(df_non_target, #df with all non-target data
@@ -77,23 +81,30 @@ df_density <- df_h_sec %>% #df with all habitat data
   select(-c(abundance.x, abundance.y)) %>% 
   arrange(occasion, section) 
 
-# join density for all fish with recaptured individual's information
-df3 <- Y0 %>% # from above with tagged fish info
-  select(-c(fin_recap, mortality)) %>% 
-  group_by(occasion, tag) %>% 
-  ungroup() %>% 
-  left_join(df_density, by = c("occasion", "section"), # join with all density data
-            relationship = "many-to-many")  # duplicates tags to include density for each species possible in that sec @ given occ   
- 
-# create vectorized format
-Y2 <- df3 %>% 
-  pivot_wider(id_cols = tag_index,
-              names_from = occasion,
-              values_from = d) %>% # issue of having multiple densities for each tag
-  pivot_longer(cols = -tag_index,
-               names_to = "occasion", 
-               values_to = "density") %>% 
-  arrange(tag_index, occasion)
+# get bluehead chub density for now
+df_density_sub <- df_density %>% 
+  filter(species == "bluehead_chub") %>% 
+  dplyr::select(occasion, section, d)
+
+
+
+# # join density for all fish with recaptured individual's information
+# df3 <- Y0 %>% # from above with tagged fish info
+#   select(-c(fin_recap, mortality)) %>%
+#   group_by(occasion, tag) %>%
+#   ungroup() %>%
+#   left_join(df_density, by = c("occasion", "section"), # join with all density data
+#             relationship = "many-to-many")  # duplicates tags to include density for each species possible in that sec @ given occ
+# 
+# # create vectorized format
+# Y2 <- df3 %>%
+#   pivot_wider(id_cols = tag_index,
+#               names_from = occasion,
+#               values_from = d) %>% # issue of having multiple densities for each tag
+#   pivot_longer(cols = -tag_index,
+#                names_to = "occasion",
+#                values_to = "density") %>%
+#   arrange(tag_index, occasion)
  
  # create first capture vector 
  # fc <- Y2 %>% 
@@ -106,22 +117,24 @@ Y2 <- df3 %>%
 
 # Format Size  ------------------------------------------------------
 
-# create vectorized format
- Y3 <- Y0 %>% 
-   pivot_wider(id_cols = tag_index,
-               names_from = occasion,
-               values_from = length) %>% 
-   pivot_longer(cols = -tag_index,
-                names_to = "occasion",
-                values_to = "length") %>% 
-   arrange(tag_index, occasion)
- 
- # create first capture vector 
- # fc <- Y3 %>% 
- #   group_by(tag_index) %>% 
- #   filter(!is.na(length)) %>% 
- #   slice(which.min(occasion)) %>% 
- #   ungroup() %>% 
- #   arrange(tag_index)
- 
- 
+## keep this out for now - think later (as of 3/25/24)
+# 
+# # create vectorized format
+#  Y3 <- Y0 %>% 
+#    pivot_wider(id_cols = tag_index,
+#                names_from = occasion,
+#                values_from = length) %>% 
+#    pivot_longer(cols = -tag_index,
+#                 names_to = "occasion",
+#                 values_to = "length") %>% 
+#    arrange(tag_index, occasion)
+#  
+#  # create first capture vector 
+#  # fc <- Y3 %>% 
+#  #   group_by(tag_index) %>% 
+#  #   filter(!is.na(length)) %>% 
+#  #   slice(which.min(occasion)) %>% 
+#  #   ungroup() %>% 
+#  #   arrange(tag_index)
+#  
+#  
