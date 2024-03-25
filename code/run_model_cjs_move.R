@@ -7,20 +7,19 @@ source("code/library.R")
 source("code/function.R")
 source("code/setup_cjs.R")
 
-Nind <- nrow(Y) # length (#) of individuals
-Nocc <- ncol(Y) # width (#) of occasions
-#X <- Y1 * 10 - 5 # calculates midpoint of section
-#Y <- apply(Y2, 1, FUN = function(x) ifelse(is.na(x), 0, 1)) %>% # calculate capture state
-  t()
-#Fc <- apply(Y, MARGIN = 1, getf) # applies function to get the first occasion 
+Nind <- unique(Y$tag_index) # number of individuals
+Nocc <- unique(Y$occasion) # number of occasions
 
+# how to format below list now that data is no longer in matrix but vector (needs to select correct column)
 
+# left side is model text ; right side is setup text
 d_jags <- list(Y = Y,                # capture state  
-               X = X,                # section midpoint
-               Density = Y3,         # density predictor
+               X = Y1,               # movement proxy
+               Density = Y2,         # density predictor
+               Size = Y3,            # size predictor
                Nind = Nind,          # number of individuals
-               Nocc = Nocc,          # occasion 1-14
-               Fc = Fc,              # get first occasion
+               Nocc = Nocc,          # number of occasions
+               Fc = fc,              # get first occasion of capture
                L = 430)              # length of study reach
 
 para <- c("mean.phi", "mean.p", "alpha", "beta")

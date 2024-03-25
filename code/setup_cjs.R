@@ -21,7 +21,7 @@ Y0 <- df_format %>%
   relocate(tag_index, occasion) %>% 
   mutate(x = section * 10 - 5)
 
-#create vectorized movement format
+#create vectorized survival format
 Y <- Y0 %>% 
   pivot_wider(id_cols = tag_index,
               names_from = occasion,
@@ -53,13 +53,13 @@ Y1 <- Y0 %>%
                values_to = "x") %>% 
   arrange(tag_index, occasion)
 
-# first capture occasion 
-fc <- Y1 %>% 
-  group_by(tag_index) %>% 
-  filter(!is.na(x)) %>% 
-  slice(which.min(occasion)) %>% 
-  ungroup() %>% 
-  arrange(tag_index)
+# first capture occasion- dont think this is necessary because fc is gathered for survial initially
+# fc <- Y1 %>% 
+#   group_by(tag_index) %>% 
+#   filter(!is.na(x)) %>% 
+#   slice(which.min(occasion)) %>% 
+#   ungroup() %>% 
+#   arrange(tag_index)
 
 # Format Density ---------------------------------------------------
 # combine non-target, habitat, and tagged data sets and calculate density
@@ -96,12 +96,12 @@ Y2 <- df3 %>%
   arrange(tag_index, occasion)
  
  # create first capture vector 
- fc <- Y2 %>% 
-   group_by(tag_index) %>% 
-   filter(!is.na(density)) %>% 
-   slice(which.min(occasion)) %>% 
-   ungroup() %>% 
-   arrange(tag_index)
+ # fc <- Y2 %>% 
+ #   group_by(tag_index) %>% 
+ #   filter(!is.na(density)) %>% 
+ #   slice(which.min(occasion)) %>% 
+ #   ungroup() %>% 
+ #   arrange(tag_index)
 
 
 # Format Size  ------------------------------------------------------
@@ -117,11 +117,11 @@ Y2 <- df3 %>%
    arrange(tag_index, occasion)
  
  # create first capture vector 
- fc <- Y3 %>% 
-   group_by(tag_index) %>% 
-   filter(!is.na(length)) %>% 
-   slice(which.min(occasion)) %>% 
-   ungroup() %>% 
-   arrange(tag_index)
+ # fc <- Y3 %>% 
+ #   group_by(tag_index) %>% 
+ #   filter(!is.na(length)) %>% 
+ #   slice(which.min(occasion)) %>% 
+ #   ungroup() %>% 
+ #   arrange(tag_index)
  
  

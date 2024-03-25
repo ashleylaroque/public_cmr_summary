@@ -36,17 +36,16 @@ model {
     } #t
   } #i
   
-  ## dispersal model
+  
+  ## movement model
   ## prior
   
-  ## if you want to model the effects of predictors, make sd_x as a function of predictors
-  ## e.g., log(sd_x) <- alpha + beta * size[i, t]
- # sd_x ~ dunif(0, 1000) # constraint for movement (1000 comes from study reach being 430 so logically the number must be larger than the absolute max value)
- # tau_x <- pow(sd_x, -2)  # variance for movement
-  sd_eps ~ dunif(0, 10) # constraint for temporal variation
-  tau_eps <- pow(sd_eps, -2) # variance for temporal variation
-  alpha ~ dnorm(0, 0.01) 
-  beta ~ dnorm(0, 0.01) 
+ # sd_x ~ dunif(0, 1000)       # constraint for movement (1000 comes from study reach being 430 so logically the number must be larger than the absolute max value)
+ # tau_x <- pow(sd_x, -2)      # variance for movement
+  sd_eps ~ dunif(0, 10).       # constraint for temporal variation
+  tau_eps <- pow(sd_eps, -2)   # variance for temporal variation
+  alpha ~ dnorm(0, 0.01)        
+  beta ~ dnorm(0, 0.01)        
   
   ## likelihood
   for (i in 1:Nind) {
@@ -55,12 +54,20 @@ model {
       xi[i, t] <- step(s[i, t] - 1.5) # true emigration
       s[i, t] <- step(L - X[i, t]) + step(X[i, t]) # component to measure emigration (whether they have left up vs downstream)
     
-      # density predictor   
+      # density and size predictor   
       tau_x[i, t - 1] <- pow(sd_x[i, t-1], -2) # variance over time and individual from movement contraint over time and individual
-      log(sd_x[i, t - 1]) <- alpha + beta * Density[i, t - 1] + eps[i, t - 1] # integrate density with a temporal variation parameter
+      log(sd_x[i, t - 1]) <- alpha + beta * Density[i, t - 1] * Size[i, t - 1] + eps[i, t - 1] # integrate density and size with a temporal variation parameter
       eps[i, t - 1] ~ dnorm(0, tau_eps) # eps integrates temporal variation
     
     }#t
   }#i
+  
+  ## nested model to retrospectively generate missing values 
+  # density: from predicted movement, generate section so that density in that given section can be applied as a predictor
+  # size: fill in missing size values between recapture events based on predicted growth curve 
+  for (i in 1:Nind) {
+    
+    
+  }
   
 }
