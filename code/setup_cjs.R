@@ -1,7 +1,6 @@
 # Data set up for CJS model 
 
 source("code/library.R")
-source("code/function.R")
 
 # Setup Data ---------------------------------------
 
@@ -14,13 +13,13 @@ df_format <- read_csv(here::here("data_formatted/formatted_cmr.csv")) %>%
   ungroup() %>% 
   filter(species == "bluehead_chub")
 
-# generate movement 
+# generate tag index and arrange  
 Y0 <- df_format %>% 
   mutate(tag_index = as.numeric(as.factor(tag))) %>% 
   arrange(tag_index, occasion) %>% 
   relocate(tag_index, occasion)
 
-#create vectorized survival format
+#create vectorized recapture format
 Y <- Y0 %>% 
   pivot_wider(id_cols = tag_index,
               names_from = occasion,
@@ -54,13 +53,6 @@ Y1 <- Y0 %>%
          occasion = as.numeric(occasion)) %>% 
   arrange(tag_index, occasion)
 
-# first capture occasion- dont think this is necessary because fc is gathered for survial initially
-# fc <- Y1 %>% 
-#   group_by(tag_index) %>% 
-#   filter(!is.na(x)) %>% 
-#   slice(which.min(occasion)) %>% 
-#   ungroup() %>% 
-#   arrange(tag_index)
 
 # Format Density ---------------------------------------------------
 
@@ -81,38 +73,14 @@ df_density <- df_h_sec %>% #df with all habitat data
   select(-c(abundance.x, abundance.y)) %>% 
   arrange(occasion, section) 
 
+# formatted density for later use with all species 
+# Y2 <- df_density %>% 
+#   dplyr::select(occasion, section, d, species)
+
 # get bluehead chub density for now
 df_density_sub <- df_density %>% 
   filter(species == "bluehead_chub") %>% 
   dplyr::select(occasion, section, d)
-
-
-
-# # join density for all fish with recaptured individual's information
-# df3 <- Y0 %>% # from above with tagged fish info
-#   select(-c(fin_recap, mortality)) %>%
-#   group_by(occasion, tag) %>%
-#   ungroup() %>%
-#   left_join(df_density, by = c("occasion", "section"), # join with all density data
-#             relationship = "many-to-many")  # duplicates tags to include density for each species possible in that sec @ given occ
-# 
-# # create vectorized format
-# Y2 <- df3 %>%
-#   pivot_wider(id_cols = tag_index,
-#               names_from = occasion,
-#               values_from = d) %>% # issue of having multiple densities for each tag
-#   pivot_longer(cols = -tag_index,
-#                names_to = "occasion",
-#                values_to = "density") %>%
-#   arrange(tag_index, occasion)
- 
- # create first capture vector 
- # fc <- Y2 %>% 
- #   group_by(tag_index) %>% 
- #   filter(!is.na(density)) %>% 
- #   slice(which.min(occasion)) %>% 
- #   ungroup() %>% 
- #   arrange(tag_index)
 
 
 # Format Size  ------------------------------------------------------
@@ -128,13 +96,5 @@ df_density_sub <- df_density %>%
 #                 names_to = "occasion",
 #                 values_to = "length") %>% 
 #    arrange(tag_index, occasion)
-#  
-#  # create first capture vector 
-#  # fc <- Y3 %>% 
-#  #   group_by(tag_index) %>% 
-#  #   filter(!is.na(length)) %>% 
-#  #   slice(which.min(occasion)) %>% 
-#  #   ungroup() %>% 
-#  #   arrange(tag_index)
 #  
 #  

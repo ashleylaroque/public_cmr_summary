@@ -61,29 +61,37 @@ model {
     }#t
   }#i
   
-  # ## nested model to retrospectively generate missing values 
+  
   # # density: from predicted movement, generate section so that density in that given section can be applied as a predictor
+# m[i , t] <- X - Xm[i , t]   # movement difference
+# am[i , t] <- abs(m[i , t]) - 5 # absolute value of movement -5 to get 1 negative value which = closest section
+# # need to use am[i , t] to pull density at that section but BUGS doesnt have which()              
+  
+  # generate section from movement
+  # correspond section from movement with section matrix
+  # pull density at given section
+  # input density as predictor for movement
+  
+  
   # # size: fill in missing size values between recapture events based on predicted growth curve 
-  # for (i in 1:Nind) {
-  #   
-  #   
-  # }
+
   
 }
 
+# tells JAGS how to turn vector data into matrix
 data {
   ## reorganize capture-recapture Y
   for (n in 1:Nobs) {
-    Ym[Id_tag_y[n], Id_occ_y[n]] <- Y[n]
+    Ym[Id_tag_y[n], Id_occ_y[n]] <- Y[n] # recapture matrix
   }
   
   for (i in 1:Nx) {
-    Xm[Id_tag_x[i], Id_occ_x[i]] <- X[i]
-    Sm[Id_tag_x[i], Id_occ_x[i]] <- Section[i]
+    Xm[Id_tag_x[i], Id_occ_x[i]] <- X[i] # movement matrix
+    Sm[Id_tag_x[i], Id_occ_x[i]] <- Section[i] # section matrix
   }
  
   for (j in 1:Nd) {
-    Den[Id_sec_d[j], Id_occ_d[j]] <- Density[j]
+    Den[Id_sec_d[j], Id_occ_d[j]] <- Density[j] # density matrix 
   }
    
 }

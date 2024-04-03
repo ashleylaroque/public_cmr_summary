@@ -67,6 +67,14 @@ df_m <- df_interval %>% #cmr data formatted with cap/recap intervals
 #write.csv(df_m, file = "data_formatted/formatted_cmr_movement.csv", row.names = F)
 
 
+# growth estimates 
+practice <- df_m %>%
+  mutate(date_diff = julian_recap - julian_cap, 
+        growth_rate = ((length_recap - length_cap)/(julian_recap - julian_cap))*100) %>% 
+  # growth rate has negative values which cannot be possible (ie fish losing length)
+  select(tag, species, opponent, density, date_diff, growth_rate, move)
+
+
 # lengthen habitat variables with fish density for figures 
 df_hab_l <- df_m %>% 
   select(occasion_cap, section_cap, species, density, move, opponent) %>% 
