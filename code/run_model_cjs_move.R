@@ -1,40 +1,45 @@
-# Run CJS Model with movement integrated
-
+#' Author: Ashley LaRoque, Akira Terui
+#' Description:
+#' This script runs CJS model integrating imperfect detection and movement
 
 # Setup -------------------------------------------------------------------
 
 source("code/library.R")
 source("code/setup_cjs.R")
 
-list_recap <- with(Y,
-                   list(Y = x,# capture state  
+## binary recapture record
+list_recap <- with(df_y,
+                   list(Y = y,# capture state  
                         Id_tag_y = tag_index, # tag id
                         Id_occ_y = occasion, # occasion
                         Nind = n_distinct(tag_index), # n unique ind
                         Nocc = n_distinct(occasion), # n unique occasions
-                        Nobs = nrow(Y),
+                        Nobs = nrow(df_y),
                         L = 430, # total length
-                        Fc = fc$occasion)) # first capture
+                        Nsec = 43,
+                        Fc = df_fc$occasion,
+                        X_mid = seq(5, 425, by = 10))
+                   ) # first capture
 
-Y1 <- Y1 %>% 
-  drop_na(x)
-
-list_move <- with(Y1,
+## movement distance
+df_dist <- df_dist %>% drop_na(x)
+list_move <- with(df_dist,
                   list(X = x, # distance class
                        Section = section, # section
                        Id_tag_x = tag_index,
                        Id_occ_x = occasion,
-                       Nx = nrow(Y1)))
+                       Nx = nrow(df_dist)))
 
-list_d <- with(df_density_sub,
-               list(Density = d, # fish density
+## density
+list_d <- with(df_den,
+               list(Density = density_redbreast_sunfish,
                     Id_occ_d = occasion,
                     Id_sec_d = section,
-                    Nd = nrow(df_density_sub)))
+                    Nd = nrow(df_den)))
 
 d_jags <- c(list_recap, list_move, list_d)
 
-para <- c("mean.phi", "mean.p", "alpha", "beta")
+para <- c("alpha", "beta")
 
 # mcmc setup --------------------------------------------------------------
 
@@ -53,7 +58,8 @@ inits <- replicate(n_chain,
                    list(.RNG.name = "base::Mersenne-Twister",
                         .RNG.seed = NA,
                         mean.p = 0.5,
-                        mean.phi = 0.9),
+                        mean.phi = 0.9,
+                        alpha = 3),
                    simplify = FALSE)
 
 for (j in 1:n_chain) inits[[j]]$.RNG.seed <- (j - 1) * 10 + 1

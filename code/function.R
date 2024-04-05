@@ -1,4 +1,9 @@
+
 # mrcheck function --------------------------------------------------------
+#' @data data
+#' @xi weight threshold to detect outliers in robust regression
+#' @rm_multi If TRUE, multiple recaptures within the same occasion will be removed
+#' @cnm column names that should be in the data
 
 mrcheck <- function(data,
                     xi = 0.3,
@@ -109,17 +114,3 @@ mrcheck <- function(data,
   }
   
 }
-
-
-
-# get first ---------------------------------------------------------------
-# 
-# getf <- function(x) min(which(x == 1))
-# 
-# get_nonna <- function(x) min(which(!is.na(x)))
-# 
-
-
-
-
-

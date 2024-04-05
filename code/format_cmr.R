@@ -1,233 +1,102 @@
-# R version 4.3.2
-# Ashley LaRoque
-# Format CMR Data 
+#' Author: Ashley LaRoque, Akira Terui
+#' Description:
+#' This script format capture-mark-recapture data from the North Campus
+#' at the University of North Carolina Greensboro.
+#' This includes formatting of fish density data.
+
+# setup -------------------------------------------------------------------
+
+## remove objects
+rm(list = ls())
 
 source(here::here("code/library.R"))
+source(here::here("code/function.R"))
 
-# Read Data ---------------------------------------------------------------
-drive_download("data_cmr_master_workingcopy", 
-               type = "csv", 
-               path = "data_raw/data_cmr_master.csv", 
-               overwrite = T )
+## run only when need to update habitat data
+## `format_habitat.R` will update `data_habitat.rds`
+source("code/format_habitat.R")
 
-data <- read_csv(here::here("data_raw/data_cmr_master.csv"))
+# format tagged data ------------------------------------------------------
 
-df_cmr <- data %>% 
+# ## download data for pit tags
+# ## run only when data need to be updated
+# drive_download("data_cmr_north_campus_v1_0_5",
+#                type = "csv",
+#                path = "data_raw/data_cmr_src.csv",
+#                overwrite = T)
+
+## df_cmr0: data frame before cleaning
+df_cmr0 <- read_csv(here::here("data_raw/data_cmr_src.csv")) %>% 
   rename_with(.fn = str_to_lower,
               .cols = everything()) %>% # make column headers lowercase
-  dplyr::select(-c(error_corrected, 
-                   comments, 
-                   tag_id, 
-                   time, 
-                   glued,
-                   fin_clip,
-                   site,
-                   `vial_#`)) %>% # remove extraneous columns
-  rename(tag = tag_id2) %>%  # change column name
-  mutate(f_occasion = paste0("occ", occasion))  #add column to make occasions into characters
-
-# separate na values for merging later (to calculate density including NA)
- df_na <- df_cmr %>% # for use to merge for density
-   filter(is.na(species)) %>%
-   mutate(date = as.Date(date, format = "%m/%d/%Y"), # data type change: date column
-         julian = julian(date)) 
-
-
-# separate non-na for outlier correction
-df_cmr <- df_cmr  %>% #filter out moralities
-  drop_na(tag) %>%  #omit NA values
+  dplyr::select(occasion,
+                date,
+                time,
+                tag_id = tag_id2,
+                site,
+                species,
+                section,
+                length,
+                weight,
+                recap,
+                mortality) %>% 
   filter(mortality == "n")
 
+# ## check length / weight relationship (visual)
+# ## - before removing suspicious data
+# ggplot(df_cmr0,
+#        aes(x = length ,
+#            y = weight,
+#            color = factor(occasion))) +
+#   geom_point()+
+#   facet_wrap(~species) +
+#   scale_x_continuous(trans = "log10") +
+#   scale_y_continuous(trans = "log10") #shows some outliers of l v w relationship
+
+## rows with suspicious weight/length entry
+## - for checking; not used in the following analysis
+df_err <- mrcheck(df_cmr0,
+                  xi = 0.3,
+                  cnm = colnames(df_cmr0))
 
 
-# Check Data --------------------------------------------------------------
+## mrcheck() performs:
+## - remove rows with tag_id = NA
+## - check if inconsistent species names for a given tag_id
+## - select the last capture if multiple captures occurred within the same occasion
+## - append weight values of robust regression between body length and weight
+## - convert date character to date format
+df_cmr <- mrcheck(df_cmr0,
+                  xi = 0,
+                  cnm = colnames(df_cmr0)) %>% 
+  mutate(weight = ifelse(rlm_weight <= 0.3, NA, weight))
 
-# check data summary
-skimr::skim(df_cmr)
+# ## check length / weight relationship (visual)
+# ## - after removing suspicious data (NA in weight)
+# ggplot(df_cmr,
+#        aes(x = length ,
+#            y = weight,
+#            color = factor(occasion))) +
+#   geom_point()+
+#   facet_wrap(~species) +
+#   scale_x_continuous(trans = "log10") +
+#   scale_y_continuous(trans = "log10") #shows some outliers of l v w relationship
 
-# check recurring tags have matching species
-error_id <- df_cmr %>% 
-  group_by(tag) %>% 
-  summarize(n_species = n_distinct(species)) %>%    #finds tags that are duplicates
-  filter(n_species > 1) %>%                         #duplicate tags extracted
-  pull(tag)
-
-# df_cmr %>% 
-#   filter(tag %in% error_id) %>%     #filters out the tags from error_id
-#   arrange(tag) %>%                  #each tag should have the same species throughout occasions
-#   view()
-
-# check length / weight relationship (visual)
-ggplot(df_cmr, aes(x = length , y = weight, color = f_occasion)) +
-  geom_point()+
-  facet_wrap(~species) +
-  scale_x_continuous(trans = "log10") +
-  scale_y_continuous(trans = "log10") #shows some outliers of l v w relationship
-
-# Remove Outliers ---------------------------------------------------------
-
-# vector of species name
-v_sp <- unique(df_cmr$species)
-
-# threshold value of "weight"
-z <- 0.3  # lower value only big will be removed = more deviation from line (play around with this value to know)
-
-# Pull outliers to be corrected
-df0 <- foreach(i = seq_len(n_distinct(df_cmr$species)),
-               .combine = bind_rows) %do% {
-
-                 # subset data by species
-                 df_sp <- df_cmr %>%
-                   filter(species == v_sp[i])
-
-                 # fit robust linear model
-                 # robust linear model returns "weight" value for each data point
-                 # based on deviation from the general trend (RLM)
-                 fit <- MASS::rlm(log(weight) ~ log(length) + f_occasion,
-                                  df_sp)
-
-                 cout <- df_sp %>%
-                   mutate(w = fit$w)
-
-                 if (any(fit$w < z)) {
-                   # remove entries with weight < z
-                   # which(fit$w < z) returns row numbers with w < z
-                   # minus sign means "remove"
-                   df_filter <- df_sp %>%
-                     slice(-which(fit$w < z))
-                 } else {
-                   df_filter <- df_sp
-                 }
-
-                 return(cout)
-               }
-## select what rows are irrelgular
-df_sp[fit$w < .3, ]
-
-df1 <- mutate(df0, col = ifelse(w < 0.3, "yes", "no")) 
-
-## visualize possible outliers
-ggplot(df1) +
-  geom_point(aes(x = length,
-                 y = weight,
-                 color = col)) +
-  theme_minimal() +
-  facet_wrap(~species, ncol= 3, scales="free") +
-  scale_x_continuous(trans = "log10") +
-  scale_y_continuous(trans = "log10")
-
-df1 <- df1 %>%
-  filter(col == "yes")    # filters out which tags are potential outliers for correction
-
-# repeat robust regression analysis to identify outliers
-# finds anomalies in relationship 
-df0 <- foreach(i = seq_len(n_distinct(df_cmr$species)),
-               .combine = bind_rows) %do% {
-                 
-                 # subset data by species
-                 df_sp <- df_cmr %>% 
-                   filter(species == v_sp[i])
-                 
-                 # fit robust linear model
-                 # robust linear model returns "weight" value for each data point based on deviation from the general trend
-                 fit <- MASS::rlm(log(weight) ~ log(length),
-                                  df_sp)
-                 
-                 if (any(fit$w < z)) {
-                   # remove entries with weight < z
-                   # which(fit$w < z) returns row numbers with w < z
-                   # minus sign means "remove"
-                   df_filter <- df_sp %>% 
-                     slice(-which(fit$w < z))
-                 } else {
-                   df_filter <- df_sp
-                 }
-                 
-                 return(df_filter)
-               }
-
-## visualize after outlier removal
-ggplot(df0) +
-  geom_point(aes(x = length,
-                 y = weight,
-                 color = f_occasion)) +
-  theme_minimal() +
-  facet_wrap(~species, ncol= 3, scales="free") +
-  scale_x_continuous(trans = "log10") +
-  scale_y_continuous(trans = "log10")
-
-# Calculate intervals for movement and merging ------------------------------------------------------
-
-## prepare data for merging with non-target and habitat data
-df1 <- df0 %>% #df0 is after outlier correction
-  mutate(date = as.Date(date, format = "%m/%d/%Y"), # data type change: date column
-         julian = julian(date)) %>% # julian date because R wont recognize other date formats for gathering earliest occurance
-  group_by(tag, occasion) %>% # group by tag and occasion
-  slice(which.min(date)) %>% # pick the first capture in each occasion
-  ungroup() 
-
-write.csv(df1, file = "data_formatted/formatted_cmr.csv", row.names = F) # does not include NA
-
-# make data into wide format to calculate differences 
-df_wide <- df1 %>% 
-  pivot_wider(id_cols = c(tag, species),
-              names_from = occasion,
-              values_from = c(length, weight, julian),
-              names_sort = TRUE)
-
-## Calculate time interval using Julian date
-df_interval <- df_wide %>% 
-  select(starts_with("julian")) %>% 
-  purrrlyr::by_row(lift_vl(diff),
-                   .to = "y_",
-                   .collate = "cols") %>% 
-  select(starts_with("y")) %>% 
-  mutate(select(df_wide, c(tag, species))) %>% 
-  pivot_longer(cols = starts_with("y"),
-               values_to = "interval",
-               names_to = c("var_name", "occasion_cap"),
-               names_sep = "_") %>% 
-  drop_na(interval) %>% 
-  select(-var_name) %>% 
-  mutate(occasion_cap = as.numeric(occasion_cap),
-         occasion_recap = occasion_cap + 1) %>% 
-  relocate(tag,
-           species,
-           occasion_cap,
-           occasion_recap)
-
-# bind NA values with formatted CMR values (df1)
-df2 <- df1 %>% 
-  rbind(df_na) # bind with na values 
-
-# abundance of tagged individuals per section per occasion
-df_t <- df2 %>% 
-  group_by(species,
-           section,
-           occasion) %>% 
-  summarize(abundance = n()) %>% 
-  ungroup() 
-
-# abundance of tagged individuals including NA/0's
-df_target <- with(df2, 
-     expand.grid(occasion = sort(unique(occasion)),
-                 section = seq(1, 43, by = 1),
-                 species = sort(unique(species)))) %>% 
-  as_tibble() %>% 
-  left_join(df_t, by = c("occasion", "section", "species")) %>% 
-  mutate(abundance = ifelse(is.na(abundance), 0, abundance))
+## export
+saveRDS(df_cmr,
+        file = "data_formatted/data_cmr.rds")
 
 
-# Format Non-Target Data --------------------------------------------------
+# format for predictors ---------------------------------------------------
 
-drive_download("data_non_target_workingcopy", 
-               type = "csv", 
-               path = "data_raw/data_non_target.csv", 
-               overwrite = T )
+# ## data on non-target species
+# ## run only when data need to be updated
+# drive_download("data_non_target_v1_0_2", 
+#                type = "csv", 
+#                path = "data_raw/data_non_target.csv", 
+#                overwrite = T )
 
-# read data
-
-# transform data into abundance for each species per occasion per section
+## get abundance for untagged individuals per section per occasion
 df_nt <- read_csv(here::here("data_raw/data_non_target.csv")) %>% 
   rename_at(vars(everything()),
             .funs = str_to_lower) %>% # make all column headers lowercase
@@ -249,17 +118,48 @@ df_nt <- read_csv(here::here("data_raw/data_non_target.csv")) %>%
                              species == "STJ" ~ "striped_jumprock",
                              species == "WAR" ~ "warmouth",
                              species == "YB" ~ "yellow_bullhead")) %>% 
-  group_by(occasion, section, species) %>% 
-  summarize(abundance = n()) %>% 
+  group_by(species,
+           section,
+           occasion) %>% 
+  tally() %>% 
+  ungroup() %>% 
+  drop_na(species)
+
+## get abundance for tagged individuals per section per occasion
+df_t <- df_cmr %>% 
+  group_by(species,
+           section,
+           occasion) %>% 
+  tally() %>% 
   ungroup() 
 
+## get unique species id for tagged & untagged combined
+usp <- c(df_t$species, df_nt$species) %>% 
+  unique() %>% 
+  sort()
 
-# abundance of tagged individuals including NA/0's
-df_non_target <- with(df_nt, 
-                  expand.grid(occasion = sort(unique(occasion)),
-                              section = seq(1, 43, by = 1),
-                              species = sort(unique(species)))) %>% 
+## combine tagged and un-tagged data
+df_n <- with(df_cmr,
+             expand.grid(occasion = sort(unique(occasion)),
+                         section = seq(1, 43, by = 1), 
+                         species = usp)) %>% 
   as_tibble() %>% 
+  left_join(df_t, by = c("occasion", "section", "species")) %>% 
   left_join(df_nt, by = c("occasion", "section", "species")) %>% 
-  mutate(abundance = ifelse(is.na(abundance), 0, abundance))
+  mutate(n.x = replace_na(n.x, 0),
+         n.y = replace_na(n.y, 0),
+         n = n.x + n.y) %>% 
+  dplyr::select(-n.x, -n.y)
 
+## append environmental variables
+df_h <- readRDS("data_formatted/data_habitat.rds")
+
+df_den <- df_n %>% 
+  left_join(df_h %>% select(occasion, section, area)) %>% 
+  mutate(density = n / area) %>% 
+  pivot_wider(id_cols = c(occasion, section, area),
+              names_from = species,
+              values_from = c(n, density))
+  
+## export
+saveRDS(df_den, file = "data_formatted/data_density.rds")

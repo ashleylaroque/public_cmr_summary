@@ -1,11 +1,11 @@
-# CJS Movement Model 
 model {
   
-  # Priors
+  # survival model ----------------------------------------------------------
+  ## priors
   for (i in 1:Nind){
     for (t in Fc[i]:(Nocc - 1)){
-      logit(phi[i,t]) <- mu
-      p[i,t] <- mean.p
+      logit(phi[i, t]) <- mu
+      p[i, t] <- mean.p
     } #t
   } #i
   
@@ -13,35 +13,26 @@ model {
   mu <- log(mean.phi / (1 - mean.phi)) # Logit transformation
   mean.p ~ dunif(0, 1)                 # Prior for mean recapture
   
-  # Likelihood
-  
-  ## survival model
+  ## likelihood
   for (i in 1:Nind){
     
-    # Define latent state at first capture
-    z[i,Fc[i]] <- 1
+    # define latent state at first capture
+    # set one because the survival state is known
+    z[i, Fc[i]] <- 1
     
     for (t in (Fc[i]+1):Nocc){
+      # state process
+      mu_s[i, t] <- phi[i, t - 1] * z[i, t - 1]
+      z[i, t] ~ dbern(mu_s[i, t])
       
-      # State process
-      # logit(phi[i, t]) <- alpha_phi + beta_phi * size[i, t]
-      mu1[i,t] <- phi[i,t - 1] * z[i,t - 1]
-      z[i,t] ~ dbern(mu1[i,t])
-      
-      # Observation process
-      mu2[i,t] <- p[i,t - 1] * z[i,t] * xi[i,t]
-      Ym[i,t] ~ dbern(mu2[i,t])
+      # observation process
+      mu_o[i,t] <- p[i, t - 1] * z[i, t] * xi[i,t]
+      Ym[i,t] ~ dbern(mu_o[i,t])
     } #t
   } #i
   
-  
-  ## movement model
+  # movement model ----------------------------------------------------------
   ## prior
-  
- # sd_x ~ dunif(0, 1000)       # constraint for movement (1000 comes from study reach being 430 so logically the number must be larger than the absolute max value)
- # tau_x <- pow(sd_x, -2)      # variance for movement
-  sd_eps ~ dunif(0, 10)        # constraint for temporal variation
-  tau_eps <- pow(sd_eps, -2)   # variance for temporal variation
   alpha ~ dnorm(0, 0.01)        
   beta ~ dnorm(0, 0.01)        
   
@@ -51,30 +42,29 @@ model {
       Xm[i, t] ~ dnorm(Xm[i, t - 1], tau_x[i, t - 1]) # gross movement
       xi[i, t] <- step(s[i, t] - 1.5) # true emigration
       s[i, t] <- step(L - Xm[i, t]) + step(Xm[i, t]) # component to measure emigration (whether they have left up vs downstream)
-    
-      # density and size predictor   
-      tau_x[i, t - 1] <- pow(sd_x[i, t-1], -2) # variance over time and individual from movement contraint over time and individual
-      log(sd_x[i, t - 1]) <- alpha + beta * Den[Sm[i, t - 1], t - 1] + eps[i, t - 1] # integrate density and size with a temporal variation parameter
-      #log(sd_x[i, t - 1]) <- alpha + eps[i, t - 1] # integrate density and size with a temporal variation parameter
-      eps[i, t - 1] ~ dnorm(0, tau_eps) # eps integrates temporal variation
-    
+      
+      ## regression on sd parameter
+      tau_x[i, t - 1] <- pow(sd_x[i, t - 1], -2) # variance over time and individual from movement contraint over time and individual
+      log(sd_x[i, t - 1]) <- alpha + beta * den[i, t - 1]
+      
+      ## w: latent indicator; w = 1 if the deviation from the section mid point is < 5 m
+      ## sn: latent section number for individual `i` and occation `t - 1`
+      ## nu: latent indicator; nu = 1 if individual i stay in the study section
+      ## sm: latent section number; when nu = 0, dummy one will be inserted to make the code work
+      ## - `sn` cannot be used directly because sn = 0 when an individual moves out the study section
+      ## - `sm` insert dummy one for those individuals just to make the code work
+      w[i, t - 1, 1:Nsec] <- step(5 - abs(X_mid[] - Xm[i, t - 1]))
+      
+      sn[i, t - 1] <- sum(w[i, t - 1, ] * 1:Nsec)
+      nu[i, t - 1] <- step(sum(w[i, t - 1, ] * 1:Nsec) - 0.5)
+      sm[i, t - 1] <- nu[i, t - 1] * sn[i, t - 1] + (1 - nu[i, t - 1])
+      
+      ## den: density for individual i and occasion t - 1
+      ## - if nu = 0 (individual emigrate from the study section), use the mean density across the sections
+      den[i, t - 1] <- nu[i, t - 1] * Den[sm[i, t - 1], t - 1] +
+        (1 - nu[i, t - 1]) * mean(Den[, t - 1])
     }#t
   }#i
-  
-  
-  # # density: from predicted movement, generate section so that density in that given section can be applied as a predictor
-# m[i , t] <- X - Xm[i , t]   # movement difference
-# am[i , t] <- abs(m[i , t]) - 5 # absolute value of movement -5 to get 1 negative value which = closest section
-# # need to use am[i , t] to pull density at that section but BUGS doesnt have which()              
-  
-  # generate section from movement
-  # correspond section from movement with section matrix
-  # pull density at given section
-  # input density as predictor for movement
-  
-  
-  # # size: fill in missing size values between recapture events based on predicted growth curve 
-
   
 }
 
@@ -89,9 +79,9 @@ data {
     Xm[Id_tag_x[i], Id_occ_x[i]] <- X[i] # movement matrix
     Sm[Id_tag_x[i], Id_occ_x[i]] <- Section[i] # section matrix
   }
- 
+  
   for (j in 1:Nd) {
     Den[Id_sec_d[j], Id_occ_d[j]] <- Density[j] # density matrix 
   }
-   
+  
 }
