@@ -82,9 +82,30 @@ df_cmr <- mrcheck(df_cmr0,
 #   scale_x_continuous(trans = "log10") +
 #   scale_y_continuous(trans = "log10") #shows some outliers of l v w relationship
 
+input <- c("section", "length", "datetime")
+
+list_move <- lapply(input, function(x) {
+  df_cmr %>% 
+    arrange(occasion, species) %>% 
+    mutate(event = paste0("oc_", sprintf("%02d", occasion))) %>% 
+    pivot_wider(id_cols = c(species, tag_id),
+                names_from = event,
+                values_from = x)
+})
+
+# vectorize data
+df_move <- lapply(seq_len(length(list_move)),
+                  function(i) {
+                    fvec(list_move[[i]], input = input[i])
+                  }) %>% 
+  reduce(left_join, by = c("species", "tag_id", "occasion0", "occasion1"))
+
 ## export
 saveRDS(df_cmr,
         file = "data_formatted/data_cmr.rds")
+
+saveRDS(df_move,
+        file = "data_formatted/data_move.rds")
 
 
 # format for predictors ---------------------------------------------------

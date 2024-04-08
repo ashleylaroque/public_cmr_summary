@@ -114,3 +114,38 @@ mrcheck <- function(data,
   }
   
 }
+
+
+# function to convert data into vector format -----------------------------
+
+fvec <- function(x, prefix = "oc_", input = "value") {
+  
+  library(tidyverse)
+  
+  mat <- x %>% 
+    dplyr::select(starts_with(prefix)) %>% 
+    dplyr::select(sort(colnames(.)))
+  
+  v <- rep(seq_len(ncol(mat)), each = 2)
+  m <- v[-c(1, length(v))] %>% 
+    matrix(ncol = 2, byrow = TRUE)
+  
+  df_out <- lapply(seq_len(nrow(m)), function(i) {
+    
+    mat_sub <- mat[, m[i, ]] %>% 
+      mutate(species = x$species,
+             tag_id = x$tag_id,
+             occasion0 = m[i, 1],
+             occasion1 = m[i, 2]) %>% 
+      relocate(species, tag_id)
+    
+    index <- str_detect(colnames(mat_sub), prefix)
+    colnames(mat_sub)[index] <- paste0(input, c(0, 1))
+    
+    return(mat_sub)
+  }) %>% 
+    do.call(bind_rows, .)
+  
+  return(df_out)
+}
+
