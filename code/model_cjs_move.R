@@ -48,21 +48,22 @@ model {
       log(sd_x[i, t - 1]) <- alpha + beta * den[i, t - 1]
       
       ## w: latent indicator; w = 1 if the deviation from the section mid point is < 5 m
-      ## sn: latent section number for individual `i` and occation `t - 1`
-      ## nu: latent indicator; nu = 1 if individual i stay in the study section
+      ## sn: latent section number for individual `i` and occasion `t - 1`
+      ## nu: latent indicator; nu = 1 if individual 'i' stay in the study section
       ## sm: latent section number; when nu = 0, dummy one will be inserted to make the code work
       ## - `sn` cannot be used directly because sn = 0 when an individual moves out the study section
       ## - `sm` insert dummy one for those individuals just to make the code work
-      w[i, t - 1, 1:Nsec] <- step(5 - abs(X_mid[] - Xm[i, t - 1]))
+      w[i, t - 1, 1:Nsec] <- step(5 - abs(X_mid[] - Xm[i, t - 1])) # absolute value of movement midpoint - stochastic movement: 5 - :singles out which event
       
-      sn[i, t - 1] <- sum(w[i, t - 1, ] * 1:Nsec)
-      nu[i, t - 1] <- step(sum(w[i, t - 1, ] * 1:Nsec) - 0.5)
-      sm[i, t - 1] <- nu[i, t - 1] * sn[i, t - 1] + (1 - nu[i, t - 1])
+      sn[i, t - 1] <- sum(w[i, t - 1, ] * 1:Nsec) # essentially calculates how many times an individual was recaptured: w = 0 or 1 for each section 
+      nu[i, t - 1] <- step(sum(w[i, t - 1, ] * 1:Nsec) - 0.5) # determines whether an individual moved from the study section at any point 
+      sm[i, t - 1] <- nu[i, t - 1] * sn[i, t - 1] + (1 - nu[i, t - 1]) # if the individual was recaptured (found in study reach), then * by section # to retrieve density at that section
+               #what is sum for (sn)                    # what is this for? dummy calculation
       
       ## den: density for individual i and occasion t - 1
       ## - if nu = 0 (individual emigrate from the study section), use the mean density across the sections
-      den[i, t - 1] <- nu[i, t - 1] * Den[sm[i, t - 1], t - 1] +
-        (1 - nu[i, t - 1]) * mean(Den[, t - 1])
+      den[i, t - 1] <- nu[i, t - 1] * Den[sm[i, t - 1], t - 1] + # recap occurrence 
+        (1 - nu[i, t - 1]) * mean(Den[, t - 1]) # non-recap occurrence 
     }#t
   }#i
   

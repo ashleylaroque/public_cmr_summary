@@ -9,7 +9,7 @@ source("code/setup_cjs.R")
 
 ## binary recapture record
 list_recap <- with(df_y,
-                   list(Y = y,# capture state  
+                   list(Y = y, # capture state  
                         Id_tag_y = tag_index, # tag id
                         Id_occ_y = occasion, # occasion
                         Nind = n_distinct(tag_index), # n unique ind
