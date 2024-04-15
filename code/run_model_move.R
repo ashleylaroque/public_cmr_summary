@@ -10,11 +10,12 @@ source("code/function.R")
 
 ## format data
 df_move0 <- readRDS("data_formatted/data_move.rds") %>% 
-  drop_na(section0, section1)
+  drop_na(section0)
 
 df_den <- readRDS("data_formatted/data_density.rds")
 
-df_h <- readRDS("data_formatted/data_habitat.rds")
+df_h <- readRDS("data_formatted/data_habitat.rds") %>% 
+  dplyr::select(-area)
 
 ## combine movement, density, and habitat
 df_move <- df_move0 %>% 
@@ -24,8 +25,13 @@ df_move <- df_move0 %>%
   left_join(df_h,
             by = c("occasion0" = "occasion",
                    "section0" = "section")) %>% 
-  mutate(intv = as.numeric(datetime1 - datetime0)) %>% 
-  select(-c(starts_with("n_")))
+  mutate(intv = as.numeric(datetime1 - datetime0),
+         y = ifelse(is.na(section1), 0, 1)) %>% 
+  group_by(occasion0) %>% 
+  mutate(intv = ifelse(is.na(intv),
+                       median(intv, na.rm = TRUE),
+                       intv)) %>% 
+  ungroup()
 
 
 # run jags ----------------------------------------------------------------
@@ -42,8 +48,9 @@ list_est <- foreach(x = usp) %do% {
   
   ## data for jags
   list_jags <- with(df_i,
-                    list(Y1 = section1 * 10 - 5,
-                         Y0 = section0 * 10 - 5, 
+                    list(Y = y,
+                         X1 = section1 * 10 - 5,
+                         X0 = section0 * 10 - 5, 
                          Nsample = nrow(df_i),
                          Intv = intv))
   
@@ -55,7 +62,7 @@ list_est <- foreach(x = usp) %do% {
                   density_bluehead_chub,
                   density_green_sunfish,
                   density_redbreast_sunfish) %>% 
-    mutate(across(.cols = c(length0, area_ucb, starts_with("density")),
+    mutate(across(.cols = c(length0, velocity_mean, starts_with("density")),
                   .fns = function(x) c(scale(x)))) %>% 
     model.matrix(~., data = .)
   
@@ -97,16 +104,3 @@ list_est <- foreach(x = usp) %do% {
            var = colnames(X)) %>% 
     relocate(var)
 }
-
-MCMCvis::MCMCsummary(post$mcmc)
-
-MCMCvis::MCMCtrace(post$mcmc)
-
-MCMCvis::MCMCplot(post$mcmc,
-         params = "b",
-         main = "MCMC Parameter Estimate",
-         xlab = "Posterior Median with CI", 
-         labels = c("intercept", "length", "area_ucb", "density_creek_chub",
-                    "density_bluehead_chub", "density_green_sunfish", "density_redbreast_sunfish"),
-        col = c("black", "blue", "tan", "deeppink1" , "slateblue", "springgreen4", "firebrick2"))            
-
