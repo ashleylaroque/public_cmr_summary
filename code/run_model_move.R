@@ -24,7 +24,8 @@ df_move <- df_move0 %>%
   left_join(df_h,
             by = c("occasion0" = "occasion",
                    "section0" = "section")) %>% 
-  mutate(intv = as.numeric(datetime1 - datetime0))
+  mutate(intv = as.numeric(datetime1 - datetime0)) %>% 
+  select(-c(starts_with("n_")))
 
 
 # run jags ----------------------------------------------------------------
@@ -49,9 +50,12 @@ list_est <- foreach(x = usp) %do% {
   ## select predictors
   X <- df_i %>% 
     dplyr::select(length0, 
-                  velocity_mean, 
-                  density_creek_chub) %>% 
-    mutate(across(.cols = c(length0, velocity_mean, starts_with("density")),
+                  area_ucb, 
+                  density_creek_chub,
+                  density_bluehead_chub,
+                  density_green_sunfish,
+                  density_redbreast_sunfish) %>% 
+    mutate(across(.cols = c(length0, area_ucb, starts_with("density")),
                   .fns = function(x) c(scale(x)))) %>% 
     model.matrix(~., data = .)
   
@@ -93,3 +97,16 @@ list_est <- foreach(x = usp) %do% {
            var = colnames(X)) %>% 
     relocate(var)
 }
+
+MCMCvis::MCMCsummary(post$mcmc)
+
+MCMCvis::MCMCtrace(post$mcmc)
+
+MCMCvis::MCMCplot(post$mcmc,
+         params = "b",
+         main = "MCMC Parameter Estimate",
+         xlab = "Posterior Median with CI", 
+         labels = c("intercept", "length", "area_ucb", "density_creek_chub",
+                    "density_bluehead_chub", "density_green_sunfish", "density_redbreast_sunfish"),
+        col = c("black", "blue", "tan", "deeppink1" , "slateblue", "springgreen4", "firebrick2"))            
+
