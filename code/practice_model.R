@@ -1,3 +1,6 @@
+# playing around with model 
+
+
 # setup -------------------------------------------------------------------
 
 rm(list = ls())
@@ -30,16 +33,17 @@ df_move <- df_move0 %>%
   mutate(intv = ifelse(is.na(intv),
                        median(intv, na.rm = TRUE),
                        intv)) %>% 
-  ungroup() %>% 
-  select(-c(starts_with("n_")))
+  ungroup()
 
 
 # run jags ----------------------------------------------------------------
 
-usp <- c("green_sunfish",
+usp <- c("creek_chub",
+         "green_sunfish",
          "redbreast_sunfish",
-         "creek_chub",
-         "bluehead_chub") %>% 
+         "bluehead_chub",
+         "striped_jumprock",
+         "bluegill") %>% 
   sort()
 
 list_est <- foreach(x = usp) %do% {
@@ -56,12 +60,14 @@ list_est <- foreach(x = usp) %do% {
   
   ## select predictors
   X <- df_i %>% 
-    dplyr::select(length0, 
-                  area_ucb, 
+    dplyr::select(weight0, 
+                  depth_mean, 
                   density_creek_chub,
                   density_bluehead_chub,
                   density_green_sunfish,
-                  density_redbreast_sunfish) %>% 
+                  density_redbreast_sunfish,
+                  density_striped_jumprock,
+                  density_bluegill) %>% 
     mutate(across(.cols = c(length0, area_ucb, starts_with("density")),
                   .fns = function(x) c(scale(x)))) %>% 
     model.matrix(~., data = .)
@@ -99,16 +105,16 @@ list_est <- foreach(x = usp) %do% {
                             module = "glm")
   
   MCMCvis::MCMCsummary(post$mcmc) %>% 
-    as_tibble(rownames = "params") %>% 
+    as_tibble(rownames = "parms") %>% 
     mutate(y = x,
            var = colnames(X)) %>% 
     relocate(var)
 }
 
-list_est[[1]]
-list_est[[2]]
-list_est[[3]]
-list_est[[4]]
+
+MCMCvis::MCMCsummary(post$mcmc)
+
+MCMCvis::MCMCtrace(post$mcmc)
 
 MCMCvis::MCMCplot(post$mcmc,
                   params = "b",
@@ -117,4 +123,9 @@ MCMCvis::MCMCplot(post$mcmc,
                   labels = c("intercept", "length", "area_ucb", "density_creek_chub",
                              "density_bluehead_chub", "density_green_sunfish", "density_redbreast_sunfish"),
                   col = c("black", "blue", "tan", "deeppink1" , "slateblue", "springgreen4", "firebrick2"))
+
+
+
+
+
 

@@ -110,5 +110,6 @@ df_h_sec <- df_sec %>% #has depth, substrate, velocity info
             by = c("occasion", "section")) %>% 
   mutate(area_ucb = replace_na(area_ucb, 0)) # replace NA with zero
 
+
 ## export
 saveRDS(df_h_sec, "data_formatted/data_habitat.rds")

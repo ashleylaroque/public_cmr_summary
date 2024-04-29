@@ -82,7 +82,7 @@ df_cmr <- mrcheck(df_cmr0,
 #   scale_x_continuous(trans = "log10") +
 #   scale_y_continuous(trans = "log10") #shows some outliers of l v w relationship
 
-input <- c("section", "length", "datetime")
+input <- c("section", "length", "datetime", "weight")
 
 list_move <- lapply(input, function(x) {
   df_cmr %>% 

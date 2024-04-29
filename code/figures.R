@@ -12,17 +12,18 @@ source(here::here("code/format_movement.R"))
 
 # General Plots -----------------------------------------------------------
 # visualize section recapture vs section cap relationship
-ggplot(df_m) +
-  aes(x = section_cap,
-      y = section_recap) +
+ggplot(df_move) +
+  aes(x = section0,
+      y = section1) +
   geom_point() + 
   geom_smooth(method = "lm")
 
 # visualize recap per target species
-ftable(df1$recap)
-df1 %>% 
-  mutate(fi_col = ifelse(recap == "n", "darkblue", "lightgreen")) %>% 
-  ggplot(aes(x= recap, fill = fi_col)) +
+ftable(df_cmr$recap)
+df_cmr %>% 
+  mutate(Recap = ifelse(recap == "n", "No", "Yes")) %>% 
+  ggplot(aes(x= recap, fill = Recap)) +
+  scale_fill_manual(values = alpha(c("gold", "darkorange"))) +
   geom_bar() +
   theme_minimal() +
   facet_wrap(~species)
@@ -41,18 +42,15 @@ chart.Correlation(df_d_m[, c("d_creek_chub", "d_bluehead_chub", "d_striped_jumpr
 
 
 # Histograms of movement frequency ----------------------------------------
+df_m <- df_move %>% 
+ mutate(move = (section1 - section0) * 10 - 5)
 
 # Histogram of Cyprinid and Catastomid Movement per occasion at recap
 cent.move.dist <- gghistogram(df_m[df_m$species %in% c('bluehead_chub','creek_chub', 'striped_jumprock'), ], 
                               x = "move", fill = "lightgrey",
             xlab = "Distance (m)", ylab = "Frequency", binwidth = 10, 
-            facet.by = c("occasion_recap","species")) +
-  geom_vline(xintercept = 0, linetype="dashed", color = "red", size=0.9) +
-  theme(axis.text = element_text(size = 12),
-        axis.title = element_text(size = 12),
-        strip.text = element_text(size = 12),
-        legend.text = element_text(size = 12),
-        legend.title = element_blank())
+            facet.by = c("occasion1","species")) +
+  geom_vline(xintercept = 0, linetype="dashed", color = "red", size=0.9) 
 cent.move.dist
 
 # Histogram of Centrarchids Movement
@@ -202,14 +200,14 @@ ggplot(df_m[df_m$species %in% c('creek_chub','bluehead_chub','striped_jumprock')
 #geom_smooth(method=lm, se=FALSE, color = "darkgrey")
 
 # plot all habitat variables vs. fish density
-ggplot(df_hab_l, aes(value, d )) + 
+ggplot(df_h_sec, aes(value, d )) + 
   geom_point(color= "#20A387FF")+
   labs(x = "Habitat", y = "Fish Density") +
   theme_minimal()+
   facet_wrap(~habitat_variable, scales = "free")
 
 # plot selected habitat variables vs. movement
-ggplot(df_hab_l[df_hab_l$habitat_variable %in% c('velocity_mean', 'area_ucb', 'substrate_mean', 'depth_mean'), ], # some likely correlated with each other ie pool area and velocity
+ggplot(df_h_sec[df_h_sec$habitat_variable %in% c('velocity_mean', 'area_ucb', 'substrate_mean', 'depth_mean'), ], # some likely correlated with each other ie pool area and velocity
        aes(value, move)) + 
   geom_point(color= "#20A387FF")+
   labs(y = "Distance Moved (m)", x = "Habitat Variable") +
