@@ -1,3 +1,7 @@
+#' Author: Ashley LaRoque, Akira Terui
+#' Description:
+#' This script runs modified dispersal-observation model for predicting movement with density and body size
+
 # setup -------------------------------------------------------------------
 
 rm(list = ls())

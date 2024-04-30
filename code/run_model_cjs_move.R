@@ -1,6 +1,6 @@
 #' Author: Ashley LaRoque, Akira Terui
 #' Description:
-#' This script runs CJS model integrating imperfect detection and movement
+#' This script runs modified CJS model for predicting movement with density and body size
 
 # Setup -------------------------------------------------------------------
 
@@ -55,7 +55,6 @@ list_recap <- with(df_y,
                         Nobs = nrow(df_y),
                         L = 430, # total length
                         Fc = df_fc$occasion
-                        #X_mid = seq(5, 425, by = 10)
                         )
 ) # first capture
 
@@ -111,3 +110,12 @@ post <- runjags::run.jags(model = mcjs$model,
                           module = "glm") #specific to jags doesnt need to be change
 
 MCMCvis::MCMCsummary(post$mcmc)
+
+
+
+z <- as.data.frame(as.matrix(post$mcmc)) # able to use this to modify density df?
+
+
+
+
+
