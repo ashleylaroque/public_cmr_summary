@@ -5,9 +5,11 @@
 # Setup -------------------------------------------------------------------
 
 source("code/library.R")
+rm(list = ls())
 
 ## transform information
 df_tag <- readRDS("data_formatted/data_cmr.rds") %>% 
+  filter(species == "redbreast_sunfish") %>% 
   mutate(tag_index = as.numeric(as.factor(tag_id))) %>% 
   arrange(tag_index, occasion) %>% 
   relocate(tag_index, occasion)
@@ -23,6 +25,20 @@ df_y <- df_tag %>%
   mutate(y = ifelse(is.na(y), 0, 1),
          occasion = as.numeric(occasion)) %>% 
   arrange(tag_index, occasion)
+
+## append season column to df_y
+## wi
+df_season <- df_tag %>% 
+  mutate(month = format(datetime, "%m") %>% 
+           as.numeric(month),
+         season = ifelse(between(month, 4, 9),
+                         yes = 1,
+                         no = 0)) %>% 
+  distinct(occasion,
+           season) %>% 
+  arrange(occasion)
+
+df_y <- left_join(df_y, df_season)
 
 # create first capture vector 
 df_fc <- df_y %>% 
@@ -42,7 +58,8 @@ df_dist <- df_tag %>%
                values_to = "section") %>% 
   mutate(x = 10 * section - 5,
          occasion = as.numeric(occasion)) %>% 
-  arrange(tag_index, occasion)
+  arrange(tag_index, occasion) %>% 
+  drop_na(x)
 
 
 ## binary recapture record
@@ -53,13 +70,13 @@ list_recap <- with(df_y,
                         Nind = n_distinct(tag_index), # n unique ind
                         Nocc = n_distinct(occasion), # n unique occasions
                         Nobs = nrow(df_y),
+                        Season = season,
                         L = 430, # total length
                         Fc = df_fc$occasion
                         )
 ) # first capture
 
 ## movement distance
-df_dist <- df_dist %>% drop_na(x)
 list_move <- with(df_dist,
                   list(X = x, # distance class
                        Id_tag_x = tag_index,
@@ -68,7 +85,7 @@ list_move <- with(df_dist,
 
 d_jags <- c(list_recap, list_move)
 
-para <- c("sd_x", "mean.p", "mean.phi")
+para <- c("sd_x", "mu.p", "alpha", "mean.phi", "sd_phi")
 
 # mcmc setup --------------------------------------------------------------
 
@@ -87,8 +104,7 @@ inits <- replicate(n_chain,
                    list(.RNG.name = "base::Mersenne-Twister",
                         .RNG.seed = NA,
                         mean.p = 0.5,
-                        mean.phi = 0.9,
-                        alpha = 3),
+                        mean.phi = 0.9),
                    simplify = FALSE)
 
 for (j in 1:n_chain) inits[[j]]$.RNG.seed <- (j - 1) * 10 + 1
