@@ -7,27 +7,55 @@
 source("code/library.R")
 rm(list = ls())
 
+## base data frame
+df_tag0 <- readRDS("data_formatted/data_cmr.rds")
+
 ## transform information
-df_tag <- readRDS("data_formatted/data_cmr.rds") %>% 
-  filter(species == "redbreast_sunfish") %>% 
+sp <- "redbreast_sunfish"
+
+df_tag <- df_tag0 %>% 
+  filter(species == sp) %>% 
   mutate(tag_index = as.numeric(as.factor(tag_id))) %>% 
   arrange(tag_index, occasion) %>% 
   relocate(tag_index, occasion)
 
+## interval information
+intv0 <- df_tag0 %>% 
+  group_by(occasion) %>% 
+  summarize(min_date0 = min(datetime)) %>% 
+  mutate(min_date1 = lead(min_date0),
+         intv = round(min_date1 - min_date0) %>% 
+           as.numeric()) %>% 
+  drop_na(intv) %>% 
+  pull(intv)
+
+df_consec <- readRDS("data_formatted/data_move.rds") %>% 
+  filter(species == sp) %>% 
+  mutate(intv = datetime1 - datetime0) %>% 
+  group_by(occasion0) %>% 
+  mutate(intv = ifelse(is.na(intv),
+                       yes = intv0[occasion0],
+                       no = intv),
+         intv = round(intv)) %>% 
+  select(tag_id,
+         occasion = occasion0,
+         intv) %>% 
+  ungroup()
+
 ## create vectorized recapture format
 df_y <- df_tag %>% 
-  pivot_wider(id_cols = tag_index,
+  pivot_wider(id_cols = c(tag_index, tag_id),
               names_from = occasion,
               values_from = section) %>% 
-  pivot_longer(cols = -tag_index,
+  pivot_longer(cols = -c(tag_index, tag_id),
                names_to = "occasion",
                values_to = "y") %>% 
   mutate(y = ifelse(is.na(y), 0, 1),
          occasion = as.numeric(occasion)) %>% 
-  arrange(tag_index, occasion)
+  arrange(tag_index, occasion) %>% 
+  left_join(df_consec)
 
 ## append season column to df_y
-## wi
 df_season <- df_tag %>% 
   mutate(month = format(datetime, "%m") %>% 
            as.numeric(month),
@@ -72,9 +100,14 @@ list_recap <- with(df_y,
                         Nobs = nrow(df_y),
                         Season = season,
                         L = 430, # total length
-                        Fc = df_fc$occasion
-                        )
-) # first capture
+                        Fc = df_fc$occasion # first capture
+                   ))
+
+list_intv <- with(df_y %>% drop_na(intv),
+                  list(Intv = intv,
+                       Nint = nrow(df_y %>% drop_na(intv)),
+                       Id_tag_int = tag_index, # tag id
+                       Id_occ_int = occasion))
 
 ## movement distance
 list_move <- with(df_dist,
@@ -83,9 +116,9 @@ list_move <- with(df_dist,
                        Id_occ_x = occasion,
                        Nx = nrow(df_dist)))
 
-d_jags <- c(list_recap, list_move)
+d_jags <- c(list_recap, list_intv, list_move)
 
-para <- c("sd_x", "mu.p", "alpha", "mean.phi", "sd_phi")
+para <- c("sd_x", "mean.p", "mu.p", "alpha", "mean.phi", "sd_phi")
 
 # mcmc setup --------------------------------------------------------------
 
@@ -98,13 +131,13 @@ n_iter <- 1.0E+3
 n_thin <- max(3, ceiling(n_iter / 250)) #happens second want chains to converge 
 n_burn <- ceiling(max(10, n_iter/2)) #happens first and gets rid of noise 
 n_sample <- ceiling(n_iter / n_thin)
-n_chain <- 4
+n_chain <- 3
 
 inits <- replicate(n_chain,
                    list(.RNG.name = "base::Mersenne-Twister",
                         .RNG.seed = NA,
-                        mean.p = 0.5,
-                        mean.phi = 0.9),
+                        mean.p = 0.25,
+                        mean.phi = 0.999),
                    simplify = FALSE)
 
 for (j in 1:n_chain) inits[[j]]$.RNG.seed <- (j - 1) * 10 + 1

@@ -4,7 +4,11 @@ model {
   ## priors
   for (i in 1:Nind){
     for (t in Fc[i]:(Nocc - 1)){
-      logit(phi[i, t]) <- mu.phi + eps_phi[t]
+      ## phi_day[,] - survival prob per day
+      ## phi[] = phi_day^(Interval)
+      ## log(phi[]) = Interval * log(phi_day)
+      logit(phi_day[i, t]) <- mu.phi + eps_phi[t]
+      log(phi[i, t]) <- Intv_m[i, t] * log(phi_day[i, t])
     } #t
   } #i
   
@@ -48,8 +52,8 @@ model {
   
   # movement model ----------------------------------------------------------
   ## prior
-  tau_x ~ dscaled.gamma(50, 6)
-  sd_x <- 1 / sqrt(tau_x) 
+  sd_x ~ dunif(0, 1000)
+  tau_x <- pow(sd_x, -2)
   
   ## likelihood
   for (i in 1:Nind) {
@@ -57,8 +61,6 @@ model {
       Xm[i, t] ~ dnorm(Xm[i, t - 1], tau_x) # gross movement
       xi[i, t] <- step(s[i, t] - 1.5) # true emigration
       s[i, t] <- step(L - Xm[i, t]) + step(Xm[i, t]) # component to measure emigration (whether they have left up vs downstream)
-      
-
     }#t
   }#i
   
@@ -70,6 +72,10 @@ data {
   for (n in 1:Nobs) {
     Ym[Id_tag_y[n], Id_occ_y[n]] <- Y[n] # recapture matrix
     Sm[Id_tag_y[n], Id_occ_y[n]] <- Season[n] # season matrix
+  }
+  
+  for (n in 1:Nint) {
+    Intv_m[Id_tag_int[n], Id_occ_int[n]] <- Intv[n] # interval matrix
   }
   
   for (i in 1:Nx) {
