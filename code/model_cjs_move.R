@@ -41,8 +41,8 @@ model {
     
     for (t in (Fc[i] + 1):Nocc){
       # state process
-      mu_s[i, t] <- phi[i, t - 1] * z[i, t - 1]
-      z[i, t] ~ dbern(mu_s[i, t])
+      mu_s[i, t] <- phi[i, t - 1] * z[i, t - 1] 
+      z[i, t] ~ dbern(mu_s[i, t]) 
       
       # observation process
       mu_o[i,t] <- p[i, t] * z[i, t] * xi[i,t]

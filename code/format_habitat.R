@@ -15,9 +15,9 @@ source(here::here("code/function.R"))
 
 # ## download data for pit tags
 # ## run only when data need to be updated
-# drive_download("data_habitat_v1_0_4", 
-#                type = "csv", 
-#                path = "data_raw/data_habitat.csv", 
+# drive_download("data_habitat_v1_0_3",
+#                type = "csv",
+#                path = "data_raw/data_habitat.csv",
 #                overwrite = T)
 
 ## source data

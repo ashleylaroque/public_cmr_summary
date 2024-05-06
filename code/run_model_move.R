@@ -15,14 +15,28 @@ source("code/function.R")
 df_move0 <- readRDS("data_formatted/data_move.rds") %>% 
   drop_na(section0)
 
-df_den <- readRDS("data_formatted/data_density.rds")
+df_output <- readRDS("data_formatted/cjs_output.rds") %>% # comes from 'run_model_cjs_move'
+  dplyr::select(para, "50%", y) %>% # uses median estimate
+  filter(para == "mean.p") %>% 
+  rename("medi" = "50%") %>% 
+  mutate(medi = as.numeric(medi))
+
+df_den <- readRDS("data_formatted/data_density.rds") %>% 
+   left_join(df_output,
+            by = c("species" = "y")) %>% 
+  mutate(adj_density = (density * medi))
+
+df_den_adj <- df_den %>% 
+  pivot_wider(id_cols = c(occasion, section, area),
+              names_from = species,
+              values_from = c(n, adj_density))
 
 df_h <- readRDS("data_formatted/data_habitat.rds") %>% 
   dplyr::select(-area)
 
 ## combine movement, density, and habitat
 df_move <- df_move0 %>% 
-  left_join(df_den,
+  left_join(df_den_adj,
             by = c("occasion0" = "occasion",
                    "section0" = "section")) %>% 
   left_join(df_h,
@@ -62,11 +76,11 @@ list_est <- foreach(x = usp) %do% {
   X <- df_i %>% 
     dplyr::select(length0, 
                   area_ucb, 
-                  density_creek_chub,
-                  density_bluehead_chub,
-                  density_green_sunfish,
-                  density_redbreast_sunfish) %>% 
-    mutate(across(.cols = c(length0, area_ucb, starts_with("density")),
+                  adj_density_creek_chub,
+                  adj_density_bluehead_chub,
+                  adj_density_green_sunfish,
+                  adj_density_redbreast_sunfish) %>% 
+    mutate(across(.cols = c(length0, area_ucb, starts_with("adj_density")),
                   .fns = function(x) c(scale(x)))) %>% 
     model.matrix(~., data = .)
   
@@ -85,7 +99,7 @@ list_est <- foreach(x = usp) %do% {
   for (j in 1:n_chain) inits[[j]]$.RNG.seed <- 10 * j
   
   ## - parameters to be monitored
-  parms <- c("b")
+  para <- c("b")
   
   ## model files
   m <- runjags::read.jagsfile("code/model_move.R")
@@ -93,7 +107,7 @@ list_est <- foreach(x = usp) %do% {
   ## run model
   post <- runjags::run.jags(model = m$model,
                             data = list_jags,
-                            monitor = parms,
+                            monitor = para,
                             burnin = 1000,
                             sample = 1000,
                             thin = 5,
@@ -103,7 +117,7 @@ list_est <- foreach(x = usp) %do% {
                             module = "glm")
   
   MCMCvis::MCMCsummary(post$mcmc) %>% 
-    as_tibble(rownames = "params") %>% 
+    as_tibble(rownames = "para") %>% 
     mutate(y = x,
            var = colnames(X)) %>% 
     relocate(var)

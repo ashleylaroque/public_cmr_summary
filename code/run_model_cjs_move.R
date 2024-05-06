@@ -8,19 +8,29 @@ source("code/library.R")
 rm(list = ls())
 
 ## base data frame
-df_tag0 <- readRDS("data_formatted/data_cmr.rds")
+df_tag0 <- readRDS("data_formatted/data_cmr.rds") # all data
 
-## transform information
-sp <- "redbreast_sunfish"
+## separate model by species 
+ usp <- c("bluehead_chub",
+          "creek_chub",
+          "green_sunfish",
+          "redbreast_sunfish") %>%
+   sort()
 
-df_tag <- df_tag0 %>% 
-  filter(species == sp) %>% 
+df_con <- readRDS("data_formatted/data_move.rds") #consecutive movement df
+
+list_est_usp <- foreach(x = usp) %do% {
+  df_i <- filter(df_tag0, species == x)
+  df_c <- filter(df_con, species == x)
+
+df_tag <- df_i %>% #was df_tag0
+  #filter(species == sp) %>% 
   mutate(tag_index = as.numeric(as.factor(tag_id))) %>% 
   arrange(tag_index, occasion) %>% 
   relocate(tag_index, occasion)
 
 ## interval information
-intv0 <- df_tag0 %>% 
+intv0 <- df_i %>% #was df_tag0
   group_by(occasion) %>% 
   summarize(min_date0 = min(datetime)) %>% 
   mutate(min_date1 = lead(min_date0),
@@ -29,8 +39,9 @@ intv0 <- df_tag0 %>%
   drop_na(intv) %>% 
   pull(intv)
 
-df_consec <- readRDS("data_formatted/data_move.rds") %>% 
-  filter(species == sp) %>% 
+df_consec <- df_c %>% 
+  #readRDS("data_formatted/data_move.rds") %>% 
+  #filter(species == sp) %>% 
   mutate(intv = datetime1 - datetime0) %>% 
   group_by(occasion0) %>% 
   mutate(intv = ifelse(is.na(intv),
@@ -89,7 +100,6 @@ df_dist <- df_tag %>%
   arrange(tag_index, occasion) %>% 
   drop_na(x)
 
-
 ## binary recapture record
 list_recap <- with(df_y,
                    list(Y = y, # capture state  
@@ -115,6 +125,7 @@ list_move <- with(df_dist,
                        Id_tag_x = tag_index,
                        Id_occ_x = occasion,
                        Nx = nrow(df_dist)))
+
 
 d_jags <- c(list_recap, list_intv, list_move)
 
@@ -156,15 +167,21 @@ post <- runjags::run.jags(model = mcjs$model,
                           adapt = n_ad,
                           thin = n_thin,
                           n.sims = n_chain,
-                          module = "glm") #specific to jags doesnt need to be change
+                          module = "glm") #specific to jags 
 
-MCMCvis::MCMCsummary(post$mcmc)
+MCMCvis::MCMCsummary(post$mcmc) %>% 
+  as_tibble(rownames = "para") %>% 
+  mutate(y = x)
 
+}
 
+bhc <- as.data.frame(as.matrix(list_est_usp[[1]]))
+crc <- as.data.frame(as.matrix(list_est_usp[[2]]))
+gsf <- as.data.frame(as.matrix(list_est_usp[[3]]))
+rbs <- as.data.frame(as.matrix(list_est_usp[[4]])) # use mean.p for correcting density with recapture
 
-z <- as.data.frame(as.matrix(post$mcmc)) # able to use this to modify density df?
+output <- rbind(bhc, crc, gsf, rbs)
 
-
-
-
+## export
+saveRDS(output, file = "data_formatted/cjs_output.rds")
 

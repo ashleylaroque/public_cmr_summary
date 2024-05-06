@@ -20,7 +20,7 @@ source("code/format_habitat.R")
 
 # ## download data for pit tags
 # ## run only when data need to be updated
-# drive_download("data_cmr_north_campus_v1_0_5",
+# drive_download("data_cmr_north_campus_v1_0_6",
 #                type = "csv",
 #                path = "data_raw/data_cmr_src.csv",
 #                overwrite = T)
@@ -69,7 +69,9 @@ df_err <- mrcheck(df_cmr0,
 df_cmr <- mrcheck(df_cmr0,
                   xi = 0,
                   cnm = colnames(df_cmr0)) %>% 
-  mutate(weight = ifelse(rlm_weight <= 0.3, NA, weight))
+  mutate(weight = ifelse(rlm_weight <= 0.3, NA, weight),
+         occasion = as_factor(occasion),
+         occasion = as.numeric(occasion))
 
 # ## check length / weight relationship (visual)
 # ## - after removing suspicious data (NA in weight)
@@ -112,16 +114,18 @@ saveRDS(df_move,
 
 # ## data on non-target species
 # ## run only when data need to be updated
-# drive_download("data_non_target_v1_0_2", 
-#                type = "csv", 
-#                path = "data_raw/data_non_target.csv", 
+# drive_download("data_non_target_v1_0_3",
+#                type = "csv",
+#                path = "data_raw/data_non_target.csv",
 #                overwrite = T )
 
 ## get abundance for untagged individuals per section per occasion
 df_nt <- read_csv(here::here("data_raw/data_non_target.csv")) %>% 
   rename_at(vars(everything()),
             .funs = str_to_lower) %>% # make all column headers lowercase
-  mutate(species = case_when(species == "BHC" ~ "bluehead_chub",
+  mutate(occasion = as_factor(occasion),
+         occasion = as.numeric(occasion),
+                             species = case_when(species == "BHC" ~ "bluehead_chub",
                              species == "BLG" ~ "bluegill",
                              species == "CCS" ~ "creekchub_sucker",
                              species == "CRC" ~ "creek_chub",
@@ -177,10 +181,7 @@ df_h <- readRDS("data_formatted/data_habitat.rds")
 
 df_den <- df_n %>% 
   left_join(df_h %>% select(occasion, section, area)) %>% 
-  mutate(density = n / area) %>% 
-  pivot_wider(id_cols = c(occasion, section, area),
-              names_from = species,
-              values_from = c(n, density))
+  mutate(density = n / area) 
   
 ## export
 saveRDS(df_den, file = "data_formatted/data_density.rds")
