@@ -2,46 +2,59 @@
 #' Description:
 #' This script runs modified CJS model for predicting movement with density and body size
 
-# Setup -------------------------------------------------------------------
+# setup -------------------------------------------------------------------
 
 source("code/library.R")
 rm(list = ls())
 
-## base data frame
-df_tag0 <- readRDS("data_formatted/data_cmr.rds") # all data
+## base data frame with all data
+df_tag0 <- readRDS("data_formatted/data_cmr.rds")
 
-## separate model by species 
+## consecutive movement data frame
+df_con <- readRDS("data_formatted/data_move.rds")
+
+## baseline interval information
+## = from the 1st day at a given occasion to the 1st day of the next
+## `intv0` will be used for those that are not recaptured
+## Thus, calculated across all species
+intv0 <- df_tag0 %>%
+  group_by(occasion) %>% 
+  summarize(min_date0 = min(datetime)) %>% 
+  mutate(min_date1 = lead(min_date0),
+         intv = round(min_date1 - min_date0) %>% 
+           as.numeric()) %>% 
+  drop_na(intv) %>% 
+  pull(intv)
+
+
+# analysis by species -----------------------------------------------------
+
+## species ID vector for separate model by species 
 usp <- c("bluehead_chub",
          "creek_chub",
          "green_sunfish",
          "redbreast_sunfish") %>%
   sort()
 
-df_con <- readRDS("data_formatted/data_move.rds") #consecutive movement df
-
 list_est_usp <- foreach(x = usp) %do% {
+  
+  # format data for JAGS ----------------------------------------------------
+  
+  ## filter by species
   df_i <- filter(df_tag0, species == x)
   df_c <- filter(df_con, species == x)
   
-  df_tag <- df_i %>% #was df_tag0
-    #filter(species == sp) %>% 
+  ## raw recapture data for species x
+  df_tag <- df_i %>%
     mutate(tag_index = as.numeric(as.factor(tag_id))) %>% 
     arrange(tag_index, occasion) %>% 
     relocate(tag_index, occasion)
   
-  ## interval information
-  intv0 <- df_i %>% #was df_tag0
-    group_by(occasion) %>% 
-    summarize(min_date0 = min(datetime)) %>% 
-    mutate(min_date1 = lead(min_date0),
-           intv = round(min_date1 - min_date0) %>% 
-             as.numeric()) %>% 
-    drop_na(intv) %>% 
-    pull(intv)
-  
-  df_consec <- df_c %>% 
-    #readRDS("data_formatted/data_move.rds") %>% 
-    #filter(species == sp) %>% 
+  ## recapture interval for each individual
+  ## - if recaptured, interval is as observed
+  ## - if not, interval is: 
+  ## -- "from the 1st day at a given occasion to the 1st day of the next"
+  df_intv <- df_c %>% 
     mutate(intv = datetime1 - datetime0) %>% 
     group_by(occasion0) %>% 
     mutate(intv = ifelse(is.na(intv),
@@ -64,7 +77,7 @@ list_est_usp <- foreach(x = usp) %do% {
     mutate(y = ifelse(is.na(y), 0, 1),
            occasion = as.numeric(occasion)) %>% 
     arrange(tag_index, occasion) %>% 
-    left_join(df_consec)
+    left_join(df_intv)
   
   ## append season column to df_y
   df_season <- df_tag %>% 
@@ -171,7 +184,7 @@ list_est_usp <- foreach(x = usp) %do% {
   
   MCMCvis::MCMCsummary(post$mcmc) %>% 
     as_tibble(rownames = "para") %>% 
-    mutate(y = x)
+    mutate(species = x)
   
 }
 
