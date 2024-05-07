@@ -27,8 +27,10 @@ source(here::here("code/function.R"))
 ## -- stopped measuring deepest depth partway
 df_habitat <- read_csv("data_raw/data_habitat.csv") %>%
   rename_with(.fn = str_to_lower, .cols = everything()) %>% 
+  mutate(occasion = as_factor(occasion),
+         occasion = as.numeric(occasion)) %>% 
   select(-c(deepest_depth, comments)) %>% 
-  drop_na(velocity1, velocity2, velocity3)
+  drop_na(starts_with("velocity"))
 
 
 # Format Habitat Data -----------------------------------------------------
