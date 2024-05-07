@@ -103,7 +103,7 @@ df_ucb_sec <- df_ucb %>%
   group_by(occasion, section) %>%
   summarize(area_ucb = sum(area)) %>%  # sum by section returning only 1 row 
   ungroup()
-  
+
 ## merge data
 df_h_sec <- df_sec %>% #has depth, substrate, velocity info
   left_join(df_ucb_sec, #has undercut bank info

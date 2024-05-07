@@ -125,7 +125,7 @@ df_nt <- read_csv(here::here("data_raw/data_non_target.csv")) %>%
             .funs = str_to_lower) %>% # make all column headers lowercase
   mutate(occasion = as_factor(occasion),
          occasion = as.numeric(occasion),
-                             species = case_when(species == "BHC" ~ "bluehead_chub",
+         species = case_when(species == "BHC" ~ "bluehead_chub",
                              species == "BLG" ~ "bluegill",
                              species == "CCS" ~ "creekchub_sucker",
                              species == "CRC" ~ "creek_chub",
@@ -182,6 +182,6 @@ df_h <- readRDS("data_formatted/data_habitat.rds")
 df_den <- df_n %>% 
   left_join(df_h %>% select(occasion, section, area)) %>% 
   mutate(density = n / area) 
-  
+
 ## export
 saveRDS(df_den, file = "data_formatted/data_density.rds")
