@@ -36,7 +36,7 @@ usp <- c("bluehead_chub",
          "redbreast_sunfish") %>%
   sort()
 
-list_est_usp <- foreach(x = usp) %do% {
+list_est <- foreach(x = usp) %do% {
   
   # format data for JAGS ----------------------------------------------------
   
@@ -142,7 +142,7 @@ list_est_usp <- foreach(x = usp) %do% {
   
   d_jags <- c(list_recap, list_intv, list_move)
   
-  para <- c("sd_x", "mean.p", "mu.p", "alpha", "mean.phi", "sd_phi")
+  para <- c("zeta", "sd_x", "mean.p", "mu.p", "alpha", "mean.phi", "sd_phi")
   
   # mcmc setup --------------------------------------------------------------
   
@@ -150,8 +150,8 @@ list_est_usp <- foreach(x = usp) %do% {
   mcjs <- runjags::read.jagsfile("code/model_cjs_move.R")
   
   ## mcmc setup ####
-  n_ad <- 1000
-  n_iter <- 1.0E+3
+  n_ad <- 100
+  n_iter <- 3.0E+2
   n_thin <- max(3, ceiling(n_iter / 250)) #happens second want chains to converge 
   n_burn <- ceiling(max(10, n_iter/2)) #happens first and gets rid of noise 
   n_sample <- ceiling(n_iter / n_thin)
@@ -182,19 +182,28 @@ list_est_usp <- foreach(x = usp) %do% {
                             n.sims = n_chain,
                             module = "glm") #specific to jags 
   
-  MCMCvis::MCMCsummary(post$mcmc) %>% 
+  cout <- MCMCvis::MCMCsummary(post$mcmc) %>% 
     as_tibble(rownames = "para") %>% 
     mutate(species = x)
   
+  return(cout)
 }
 
-bhc <- as.data.frame(as.matrix(list_est_usp[[1]]))
-crc <- as.data.frame(as.matrix(list_est_usp[[2]]))
-gsf <- as.data.frame(as.matrix(list_est_usp[[3]]))
-rbs <- as.data.frame(as.matrix(list_est_usp[[4]])) # use mean.p for correcting density with recapture
-
-output <- rbind(bhc, crc, gsf, rbs)
+## extract median zeta (= seasonal detection probability)
+df_zeta <- lapply(list_est,
+                  function(data) {
+                    data %>% 
+                      filter(str_detect(para, "zeta\\[.\\]")) %>% 
+                      dplyr::select(para,
+                                    species,
+                                    estimate = `50%`) %>% 
+                      mutate(season = ifelse(str_detect(para, "\\[1\\]"),
+                                             "winter",
+                                             "summer"))
+                  }) %>% 
+  bind_rows()
 
 ## export
-saveRDS(output, file = "data_formatted/cjs_output.rds")
+saveRDS(list_est, file = "data_formatted/cjs_output.rds")
+saveRDS(df_zeta, file = "data_formatted/data_detection.rds")
 

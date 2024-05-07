@@ -1,12 +1,21 @@
 model {
   
   # survival model ----------------------------------------------------------
+  
+  ## transformed parameters
+  ## - zeta[1]: detection probability for winter
+  ## - zeta[2]: detection probability for summer
+  ## - 1 / (1 + exp(x)) is an inverse-logit function
+  zeta[1] <- 1 / (1 + exp(-mu.p))
+  zeta[2] <- 1 / (1 + exp(-(mu.p + alpha)))
+  
   ## priors
   for (i in 1:Nind){
     for (t in Fc[i]:(Nocc - 1)){
-      ## phi_day[,] - survival prob per day
-      ## phi[] = phi_day^(Interval)
-      ## log(phi[]) = Interval * log(phi_day)
+      ## - phi_day: survival prob per day
+      ## - phi = phi_day^(Interval): 
+      ## -- cumulative survival from one occasion to the next
+      ## -- log-transformed log(phi) = Interval * log(phi_day)
       logit(phi_day[i, t]) <- mu.phi + eps_phi[t]
       log(phi[i, t]) <- Intv_m[i, t] * log(phi_day[i, t])
     } #t
