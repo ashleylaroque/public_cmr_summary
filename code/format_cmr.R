@@ -20,7 +20,7 @@ source("code/format_habitat.R")
 
 # ## download data for pit tags
 # ## run only when data need to be updated
-# drive_download("data_cmr_north_campus_v1_1_0",
+# drive_download("data_cmr_north_campus_v1_1_2",
 #                type = "csv",
 #                path = "data_raw/data_cmr_src.csv",
 #                overwrite = T)
@@ -114,7 +114,7 @@ saveRDS(df_move,
 
 # ## data on non-target species
 # ## run only when data need to be updated
-# drive_download("data_non_target_v1_1_0",
+# drive_download("data_non_target_v1_1_1",
 #                type = "csv",
 #                path = "data_raw/data_non_target.csv",
 #                overwrite = T )

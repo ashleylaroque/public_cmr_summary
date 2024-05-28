@@ -90,6 +90,8 @@ list_est <- foreach(x = usp) %do% {
              season) %>% 
     arrange(occasion)
   
+  
+  
   df_y <- left_join(df_y, df_season)
   
   # create first capture vector 
@@ -151,7 +153,7 @@ list_est <- foreach(x = usp) %do% {
   
   ## mcmc setup ####
   n_ad <- 100
-  n_iter <- 3.0E+2
+  n_iter <- 5000
   n_thin <- max(3, ceiling(n_iter / 250)) #happens second want chains to converge 
   n_burn <- ceiling(max(10, n_iter/2)) #happens first and gets rid of noise 
   n_sample <- ceiling(n_iter / n_thin)
@@ -206,4 +208,5 @@ df_zeta <- lapply(list_est,
 ## export
 saveRDS(list_est, file = "data_formatted/cjs_output.rds")
 saveRDS(df_zeta, file = "data_formatted/data_detection.rds")
+saveRDS(df_season, file = "data_formatted/data_season.rds")
 

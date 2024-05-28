@@ -15,16 +15,17 @@ source("code/function.R")
 df_move0 <- readRDS("data_formatted/data_move.rds") %>% 
   drop_na(section0)
 
-df_output <- readRDS("data_formatted/cjs_output.rds") %>% # comes from 'run_model_cjs_move'
-  dplyr::select(para, "50%", y) %>% # uses median estimate
-  filter(para == "mean.p") %>% 
-  rename("medi" = "50%") %>% 
-  mutate(medi = as.numeric(medi))
+df_zeta <- readRDS("data_formatted/data_detection.rds") # comes from 'run_model_cjs_move'
+df_season <- readRDS("data_formatted/data_season.rds") # comes from 'run_model_cjs_move'
+df_water_level <- readRDS("data_formatted/data_water_level.rds") # comes from 'format_water_level'
 
 df_den <- readRDS("data_formatted/data_density.rds") %>% 
-   left_join(df_output,
-            by = c("species" = "y")) %>% 
-  mutate(adj_density = (density * medi))
+  left_join(df_season, by = "occasion") %>% 
+  mutate(season= case_when(season == 0 ~ "winter",
+                           season == 1 ~ "summer")) %>% 
+   left_join(df_zeta,
+            by = c("species", "season")) %>% 
+  mutate(adj_density = (density * estimate)) 
 
 df_den_adj <- df_den %>% 
   pivot_wider(id_cols = c(occasion, section, area),
@@ -35,13 +36,15 @@ df_h <- readRDS("data_formatted/data_habitat.rds") %>%
   dplyr::select(-area)
 
 ## combine movement, density, and habitat
-df_move <- df_move0 %>% 
-  left_join(df_den_adj,
+df_move <- df_move0 %>% # movement dataframe
+  left_join(df_den_adj, # add density values
             by = c("occasion0" = "occasion",
                    "section0" = "section")) %>% 
-  left_join(df_h,
+  left_join(df_h, # add habitat variables 
             by = c("occasion0" = "occasion",
                    "section0" = "section")) %>% 
+  left_join(df_water_level, # add water level fluctuations
+            by = c("occasion0" = "occasion")) %>% 
   mutate(intv = as.numeric(datetime1 - datetime0),
          y = ifelse(is.na(section1), 0, 1)) %>% 
   group_by(occasion0) %>% 
@@ -74,13 +77,14 @@ list_est <- foreach(x = usp) %do% {
   
   ## select predictors
   X <- df_i %>% 
-    dplyr::select(length0, 
-                  area_ucb, 
-                  adj_density_creek_chub,
+    dplyr::select(length0,    # length of individual
+                  area_ucb,   # area of undercut bank coverage
+                  mean_level, # water level fluctuation
+                  adj_density_creek_chub, # seasonally adjusted density
                   adj_density_bluehead_chub,
                   adj_density_green_sunfish,
                   adj_density_redbreast_sunfish) %>% 
-    mutate(across(.cols = c(length0, area_ucb, starts_with("adj_density")),
+    mutate(across(.cols = c(length0, area_ucb, mean_level, starts_with("adj_density")),
                   .fns = function(x) c(scale(x)))) %>% 
     model.matrix(~., data = .)
   
