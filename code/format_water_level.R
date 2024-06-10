@@ -19,12 +19,12 @@ source(here::here("code/library.R"))
 #                overwrite = T)
 #
 # ## data from occasion 11+
-# drive_download("11_12_23_AirTemp",
+# drive_download("05_29_24_AirTemp",
 #                type = "csv",
 #                path = "data_raw/data_air_temp2.csv",
 #                overwrite = T)
-#
-# drive_download("11_12_23_WaterTemp",
+# 
+# drive_download("05_29_24_WaterTemp",
 #                type = "csv",
 #                path = "data_raw/data_water_temp2.csv",
 #                overwrite = T)
@@ -38,7 +38,8 @@ df_air <- list.files("data_raw",
   lapply(read_csv) %>% 
   bind_rows() %>% 
   rename(air_pres = abs_pres,
-         air_temp = temp)
+         air_temp = temp) %>% 
+  select("#", date, time, air_pres, air_temp) 
 
 df_water <- list.files("data_raw",
                        pattern = "data_water",
@@ -46,13 +47,14 @@ df_water <- list.files("data_raw",
   lapply(read_csv) %>% 
   bind_rows() %>% 
   rename(water_pres = abs_pres, 
-         water_temp = temp)
+         water_temp = temp) %>% 
+  select("#", date, time, water_pres, water_temp) 
 
 # Calculate water level
 # convert air and water pressure (mmHG) to water level (m) 
 daily_dat <- df_air %>% 
-  left_join(df_water, by = c("date", "time")) %>%
-  mutate(water_level = (13.595 * (water_pres - air_pres)) / 1000,
+  left_join(df_water, by = c("date", "time", "#")) %>% # being weird without "#"
+  mutate(water_level = (13.595 * (water_pres - air_pres)) / 1000, # check units again on HOBO
          date = as.Date(date, format = "%m/%d/%y"))
 
 ## Water temperature
@@ -81,7 +83,7 @@ ggplot(daily_dat, aes(x=date, y=water_level)) +
 
 # Calculate daily mean temperature and water level
 water_temp <- daily_dat %>% 
-  group_by(date) %>% 
+  group_by(date) %>%
   summarize(n = n(),
             mean = mean(water_temp, na.rm=TRUE))
 
@@ -134,13 +136,19 @@ v_date <- read_csv("data_raw/data_cmr_src.csv") %>%
 date_obs <- water_dat$date
 
 occasion <- rep(NA, length(date_obs))
+
 for(i in 1:(length(v_date) - 1)) {
   tf <- between(date_obs, v_date[i], v_date[i + 1] - 1)
   occasion[tf] <- i
 }
 
+### needs a line to address dates after v_date
+#if(date_obs > v_date) .....?
+
+
 water_dat <- water_dat %>% 
-  mutate(occasion = occasion)
+  mutate(occasion = occasion) 
+
 
 # ## option two
 # water_dat %>% 
@@ -154,16 +162,20 @@ water_dat <- water_dat %>%
 # Calculate temperature and water level by occasion
 water_dat_occ <- water_dat %>%
   group_by(occasion) %>%
-  summarize(mean_temp = mean(temperature, na.rm=TRUE),
-            max_temp = max(temperature, na.rm=TRUE),
-            mean_level = mean(water_level, na.rm=TRUE),
-            max_level = max(water_level, na.rm=TRUE)) %>% 
+  reframe(mean_temp = mean(temperature, na.rm=TRUE),
+          max_temp = max(temperature, na.rm=TRUE),
+          #median_temp = median(temperature, na.rm=TRUE),
+          sd_temp = sd(temperature, na.rm=TRUE),
+          mean_level = mean(water_level, na.rm=TRUE),
+          max_level = max(water_level, na.rm=TRUE),
+          #median_level = median(water_level, na.rm=TRUE),
+          sd_level = sd(water_level, na.rm=TRUE),
+          scaled_level = (water_level - mean_level) / sd_level) %>% # scale to omit dimensions
   group_by(occasion) %>%
-  slice(1) %>% # remove duplicate and keep the first row for each occasion
-  select(occasion, mean_temp, max_temp, mean_level, max_level) %>%
+  slice(which.max(occasion)) %>% # remove duplicates 
+  select(occasion, mean_temp, max_temp, mean_level, max_level, scaled_level) %>%
   mutate(occasion = as.numeric(occasion))
 
 # Export file
 saveRDS(water_dat_occ, file = "data_formatted/data_water_level.rds")
-
 

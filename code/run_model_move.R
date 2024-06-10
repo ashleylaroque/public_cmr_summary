@@ -17,7 +17,8 @@ df_move0 <- readRDS("data_formatted/data_move.rds") %>%
 
 df_zeta <- readRDS("data_formatted/data_detection.rds") # comes from 'run_model_cjs_move'
 df_season <- readRDS("data_formatted/data_season.rds") # comes from 'run_model_cjs_move'
-df_water_level <- readRDS("data_formatted/data_water_level.rds") # comes from 'format_water_level'
+df_water_level <- readRDS("data_formatted/data_water_level.rds") %>%  # comes from 'format_water_level'
+select(occasion, scaled_level)
 
 df_den <- readRDS("data_formatted/data_density.rds") %>% 
   left_join(df_season, by = "occasion") %>% 
@@ -79,12 +80,12 @@ list_est <- foreach(x = usp) %do% {
   X <- df_i %>% 
     dplyr::select(length0,    # length of individual
                   area_ucb,   # area of undercut bank coverage
-                  mean_level, # water level fluctuation
+                  scaled_level, # water level fluctuation
                   adj_density_creek_chub, # seasonally adjusted density
                   adj_density_bluehead_chub,
                   adj_density_green_sunfish,
                   adj_density_redbreast_sunfish) %>% 
-    mutate(across(.cols = c(length0, area_ucb, mean_level, starts_with("adj_density")),
+    mutate(across(.cols = c(length0, area_ucb, scaled_level, starts_with("adj_density")),
                   .fns = function(x) c(scale(x)))) %>% 
     model.matrix(~., data = .)
   
@@ -136,7 +137,7 @@ MCMCvis::MCMCplot(post$mcmc,
                   params = "b",
                   main = "MCMC Parameter Estimate",
                   xlab = "Posterior Median with CI", 
-                  labels = c("intercept", "length", "area_ucb", "density_creek_chub",
-                             "density_bluehead_chub", "density_green_sunfish", "density_redbreast_sunfish"),
-                  col = c("black", "blue", "tan", "deeppink1" , "slateblue", "springgreen4", "firebrick2"))
+                  labels = c("intercept", "length0", "area_ucb", "scaled_level", "adj_density_creek_chub",
+                             "adj_density_bluehead_chub", "adj_density_green_sunfish", "adj_density_redbreast_sunfish"),
+                  col = c("black", "blue", "tan", "deeppink1" ,"orange", "slateblue", "springgreen4", "firebrick2"))
 

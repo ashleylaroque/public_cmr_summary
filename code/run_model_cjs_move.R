@@ -91,7 +91,6 @@ list_est <- foreach(x = usp) %do% {
     arrange(occasion)
   
   
-  
   df_y <- left_join(df_y, df_season)
   
   # create first capture vector 
@@ -152,9 +151,9 @@ list_est <- foreach(x = usp) %do% {
   mcjs <- runjags::read.jagsfile("code/model_cjs_move.R")
   
   ## mcmc setup ####
-  n_ad <- 100
-  n_iter <- 5000
-  n_thin <- max(3, ceiling(n_iter / 250)) #happens second want chains to converge 
+  n_ad <- 500
+  n_iter <- 15000
+  n_thin <- max(3, ceiling(n_iter / 500)) #happens second want chains to converge 
   n_burn <- ceiling(max(10, n_iter/2)) #happens first and gets rid of noise 
   n_sample <- ceiling(n_iter / n_thin)
   n_chain <- 3
@@ -210,3 +209,7 @@ saveRDS(list_est, file = "data_formatted/cjs_output.rds")
 saveRDS(df_zeta, file = "data_formatted/data_detection.rds")
 saveRDS(df_season, file = "data_formatted/data_season.rds")
 
+list_est[[1]]
+list_est[[2]]
+list_est[[3]]
+list_est[[4]]
