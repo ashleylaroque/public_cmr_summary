@@ -1,5 +1,5 @@
-# Adapted from Seog Kim's code 
-# Format water water level data 
+# Adapted from Seog Kim's code
+# Format water water level data
 
 # setup -------------------------------------------------------------------
 
@@ -12,12 +12,12 @@ source(here::here("code/library.R"))
 #                type = "csv",
 #                path = "data_raw/data_air_temp1.csv",
 #                overwrite = T)
-#
+# 
 # drive_download("05_12_23_WaterTemp",
 #                type = "csv",
 #                path = "data_raw/data_water_temp1.csv",
 #                overwrite = T)
-#
+# 
 # ## data from occasion 11+
 # drive_download("05_29_24_AirTemp",
 #                type = "csv",
@@ -37,94 +37,42 @@ df_air <- list.files("data_raw",
                      full.names = TRUE) %>% 
   lapply(read_csv) %>% 
   bind_rows() %>% 
-  rename(air_pres = abs_pres,
-         air_temp = temp) %>% 
-  select("#", date, time, air_pres, air_temp) 
+  transmute(dt = as.POSIXct(paste(date, time),
+                            format = "%m/%d/%y %H:%M:%OS",
+                            tz = "EST"),
+            air_pres = abs_pres, 
+            air_temp = temp)
 
 df_water <- list.files("data_raw",
                        pattern = "data_water",
                        full.names = TRUE) %>% 
   lapply(read_csv) %>% 
   bind_rows() %>% 
-  rename(water_pres = abs_pres, 
-         water_temp = temp) %>% 
-  select("#", date, time, water_pres, water_temp) 
+  transmute(dt = as.POSIXct(paste(date, time),
+                            format = "%m/%d/%y %H:%M:%OS",
+                            tz = "EST"),
+            water_pres = abs_pres, 
+            water_temp = temp)
 
 # Calculate water level
-# convert air and water pressure (mmHG) to water level (m) 
-daily_dat <- df_air %>% 
-  left_join(df_water, by = c("date", "time", "#")) %>% # being weird without "#"
+## `df_water` has more rows than `df_air`
+## - `df_water` must be a baseline data frame
+## convert air and water pressure (mmHG) to water level (m) 
+## NOTE: water level is not usable at this moment due to air pressure issues
+df_hourly <- df_water %>% 
+  left_join(df_air, by = "dt") %>%
   mutate(water_level = (13.595 * (water_pres - air_pres)) / 1000, # check units again on HOBO
-         date = as.Date(date, format = "%m/%d/%y"))
-
-## Water temperature
-ggplot(daily_dat, aes(x = date, y = water_temp)) + 
-  geom_line(size = 0.8, color = "red") +
-  scale_x_date(date_breaks = "10 day", labels = date_format("%m-%d")) +
-  scale_y_continuous("Water temperature") +
-  ggtitle("Hourly temperature (c)") +
-  theme_bw() +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        axis.text.x = element_text(angle = 45, hjust=1),
-        panel.background = element_rect(fill = "white"), 
-        legend.position=c(0.10,0.80))  # remove grid
-
-## Water level
-ggplot(daily_dat, aes(x=date, y=water_level)) + 
-  geom_line(size=0.8, color= "blue") +
-  scale_x_date(date_breaks = "10 day", labels = date_format("%m-%d")) +
-  scale_y_continuous("Water temperature") +
-  ggtitle("Hourly water level (m)")+ 
-  theme_bw() +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        axis.text.x = element_text(angle = 45, hjust=1),
-        panel.background = element_rect(fill = "white"), 
-        legend.position=c(0.10,0.80))
+         date = as.Date(dt))
 
 # Calculate daily mean temperature and water level
-water_temp <- daily_dat %>% 
+df_daily <- df_hourly %>% 
   group_by(date) %>%
   summarize(n = n(),
-            mean = mean(water_temp, na.rm=TRUE))
-
-depth <- daily_dat %>% 
-  group_by(date) %>% 
-  summarize(n = n(),
-            mean = mean(water_level, na.rm=TRUE))
-
-# Combine water temperature and level
-water_dat <- water_temp %>%
-  left_join(depth, by ="date") %>%
-  select(date, temperature = mean.x, water_level = mean.y)
-
-
-# Daily mean plot
-
-## Water temperature
-ggplot(water_dat, aes(x=date, y=temperature)) + 
-  geom_line(size=0.8, color= "red") +
-  scale_x_date(date_breaks = "10 day", labels = date_format("%m-%d"))+
-  scale_y_continuous("Water temperature") +
-  ggtitle("Mean daily temperature (c)") +
-  theme_bw() +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        axis.text.x = element_text(angle = 45, hjust=1),
-        panel.background = element_rect(fill = "white"), 
-        legend.position=c(0.10,0.80))
-## Water level
-ggplot(water_dat, aes(x = date, y = water_level)) + 
-  geom_line(size=0.8, color= "blue") +
-  scale_x_date(date_breaks = "10 day", labels = date_format("%m-%d")) +
-  scale_y_continuous("Water temperature") +
-  ggtitle("Mean daily water level (m)")+ 
-  theme_bw() +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        axis.text.x = element_text(angle = 45, hjust=1),
-        panel.background = element_rect(fill = "white"), 
-        legend.position=c(0.10,0.80))
+            daily_water_temp = median(water_temp, na.rm = TRUE),
+            daily_water_pres = median(water_pres, na.rm = TRUE))
 
 # Add occasion by sampling date
-# needs to be reformatted below
+## needs to be reformatted below
 ## occasion was added based on the interval between fish sampling date
 v_date <- read_csv("data_raw/data_cmr_src.csv") %>% 
   mutate(date = as.Date(Date, format = "%m/%d/%Y")) %>% 
@@ -133,20 +81,15 @@ v_date <- read_csv("data_raw/data_cmr_src.csv") %>%
   pull(date)
 
 ## option one
-date_obs <- water_dat$date
-
+date_obs <- df_daily$date
 occasion <- rep(NA, length(date_obs))
 
-for(i in 1:(length(v_date) - 1)) {
+for (i in 1:(length(v_date) - 1)) {
   tf <- between(date_obs, v_date[i], v_date[i + 1] - 1)
   occasion[tf] <- i
 }
 
-### needs a line to address dates after v_date
-#if(date_obs > v_date) .....?
-
-
-water_dat <- water_dat %>% 
+df_daily <- df_daily %>% 
   mutate(occasion = occasion) 
 
 
@@ -160,22 +103,70 @@ water_dat <- water_dat %>%
 
 
 # Calculate temperature and water level by occasion
-water_dat_occ <- water_dat %>%
+df_occ <- df_daily %>%
   group_by(occasion) %>%
-  reframe(mean_temp = mean(temperature, na.rm=TRUE),
-          max_temp = max(temperature, na.rm=TRUE),
-          #median_temp = median(temperature, na.rm=TRUE),
-          sd_temp = sd(temperature, na.rm=TRUE),
-          mean_level = mean(water_level, na.rm=TRUE),
-          max_level = max(water_level, na.rm=TRUE),
-          #median_level = median(water_level, na.rm=TRUE),
-          sd_level = sd(water_level, na.rm=TRUE),
-          scaled_level = (water_level - mean_level) / sd_level) %>% # scale to omit dimensions
-  group_by(occasion) %>%
-  slice(which.max(occasion)) %>% # remove duplicates 
-  select(occasion, mean_temp, max_temp, mean_level, max_level, scaled_level) %>%
-  mutate(occasion = as.numeric(occasion))
+  summarize(mean_temp = mean(daily_water_temp, na.rm = TRUE),
+            max_temp = max(daily_water_temp, na.rm = TRUE),
+            sd_temp = sd(daily_water_temp, na.rm = TRUE),
+            mean_wpres = mean(daily_water_pres, na.rm = TRUE),
+            max_wpres = max(daily_water_pres, na.rm = TRUE),
+            sd_wpres = sd(daily_water_pres, na.rm = TRUE))
 
 # Export file
-saveRDS(water_dat_occ, file = "data_formatted/data_water_level.rds")
+saveRDS(df_occ, file = "data_formatted/data_water_pressure.rds")
+
+
+# figure ------------------------------------------------------------------
+
+# Hourly
+
+## Water temperature
+ggplot(df_hourly, aes(x = dt, y = water_temp)) + 
+  geom_line(size = 0.8, color = "red") +
+  scale_x_datetime(date_breaks = "60 day", labels = date_format("%m-%d-%y")) +
+  scale_y_continuous("Water temperature") +
+  ggtitle("Hourly temperature (c)") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        panel.background = element_rect(fill = "white"), 
+        legend.position = c(0.10, 0.80))  # remove grid
+
+## Water level
+ggplot(df_hourly, aes(x = dt, y = water_pres)) + 
+  geom_line(size = 0.8, color = "blue") +
+  scale_x_datetime(date_breaks = "60 day", labels = date_format("%m-%d-%y")) +
+  scale_y_continuous("Water temperature") +
+  ggtitle("Hourly water level (m)") + 
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        panel.background = element_rect(fill = "white"), 
+        legend.position = c(0.10, 0.80))
+
+# Daily mean plot
+
+## Water temperature
+ggplot(df_daily, aes(x = date, y = daily_water_temp)) + 
+  geom_line(size = 0.8, color = "red") +
+  scale_x_date(date_breaks = "60 day", labels = date_format("%m-%d-%y")) +
+  scale_y_continuous("Water temperature") +
+  ggtitle("Mean daily temperature (c)") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        panel.background = element_rect(fill = "white"), 
+        legend.position = c(0.10, 0.80))
+
+## Water level
+ggplot(df_daily, aes(x = date, y = daily_water_pres)) + 
+  geom_line(size = 0.8, color = "blue") +
+  scale_x_date(date_breaks = "60 day", labels = date_format("%m-%d-%y")) +
+  scale_y_continuous("Water temperature") +
+  ggtitle("Mean daily water level (m)") + 
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        panel.background = element_rect(fill = "white"), 
+        legend.position = c(0.10, 0.80))
 
