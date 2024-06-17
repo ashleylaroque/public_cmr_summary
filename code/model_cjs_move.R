@@ -16,7 +16,7 @@ model {
       ## - phi = phi_day^(Interval): 
       ## -- cumulative survival from one occasion to the next
       ## -- log-transformed log(phi) = Interval * log(phi_day)
-      logit(phi_day[i, t]) <- mu.phi + eps_phi[t]
+      logit(phi_day[i, t]) <- mu.phi + beta * Sm[i, t]
       log(phi[i, t]) <- Intv_m[i, t] * log(phi_day[i, t])
     } #t
   } #i
@@ -32,6 +32,7 @@ model {
   }
   
   alpha ~ dnorm(0, 0.01)
+  beta ~ dnorm(0, 0.01)
   
   mean.phi ~ dunif(0, 1)               # Prior for mean survival
   mu.phi <- log(mean.phi / (1 - mean.phi)) # Logit transformation

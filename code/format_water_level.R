@@ -109,7 +109,10 @@ df_occ <- df_daily %>%
             sd_temp = sd(daily_water_temp, na.rm = TRUE),
             mean_wpres = mean(daily_water_pres, na.rm = TRUE),
             max_wpres = max(daily_water_pres, na.rm = TRUE),
-            sd_wpres = sd(daily_water_pres, na.rm = TRUE))
+            sd_wpres = sd(daily_water_pres, na.rm = TRUE)) %>% 
+  mutate(st_occ = occasion,
+         en_occ = occasion + 1) %>% 
+  drop_na(occasion)
 
 # Export file
 saveRDS(df_occ, file = "data_formatted/data_water_pressure.rds")
