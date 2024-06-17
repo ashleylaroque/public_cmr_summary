@@ -143,7 +143,7 @@ list_est <- foreach(x = usp) %do% {
   
   d_jags <- c(list_recap, list_intv, list_move)
   
-  para <- c("zeta", "sd_x", "mean.p", "mu.p", "alpha", "mean.phi", "sd_phi")
+  para <- c("zeta", "sd_x", "mean.p", "mu.p", "mu.phi", "alpha", "mean.phi", "sd_phi")
   
   # mcmc setup --------------------------------------------------------------
   

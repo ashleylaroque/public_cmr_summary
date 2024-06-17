@@ -57,11 +57,11 @@ df_water <- list.files("data_raw",
 # Calculate water level
 ## `df_water` has more rows than `df_air`
 ## - `df_water` must be a baseline data frame
-## convert air and water pressure (mmHG) to water level (m) 
+## convert air and water pressure (from absolute pressure kPa to barometric mmHg) to water level (m) 
 ## NOTE: water level is not usable at this moment due to air pressure issues
 df_hourly <- df_water %>% 
   left_join(df_air, by = "dt") %>%
-  mutate(water_level = (13.595 * (water_pres - air_pres)) / 1000, # check units again on HOBO
+  mutate(water_level = (13.595 * (water_pres - air_pres)) / 1000, 
          date = as.Date(dt))
 
 # Calculate daily mean temperature and water level
@@ -72,7 +72,6 @@ df_daily <- df_hourly %>%
             daily_water_pres = median(water_pres, na.rm = TRUE))
 
 # Add occasion by sampling date
-## needs to be reformatted below
 ## occasion was added based on the interval between fish sampling date
 v_date <- read_csv("data_raw/data_cmr_src.csv") %>% 
   mutate(date = as.Date(Date, format = "%m/%d/%Y")) %>% 
@@ -105,7 +104,7 @@ df_daily <- df_daily %>%
 # Calculate temperature and water level by occasion
 df_occ <- df_daily %>%
   group_by(occasion) %>%
-  summarize(mean_temp = mean(daily_water_temp, na.rm = TRUE),
+  summarize(mean_temp = mean(daily_water_temp, na.rm = TRUE), # uses median from each day
             max_temp = max(daily_water_temp, na.rm = TRUE),
             sd_temp = sd(daily_water_temp, na.rm = TRUE),
             mean_wpres = mean(daily_water_pres, na.rm = TRUE),
