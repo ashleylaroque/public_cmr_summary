@@ -133,11 +133,16 @@ list_est[[2]]
 list_est[[3]]
 list_est[[4]]
 
+fig <- foreach(x = list_est) %do% {
+  
 MCMCvis::MCMCplot(post$mcmc,
                   params = "b",
                   main = "MCMC Parameter Estimate",
                   xlab = "Posterior Median with CI", 
-                  labels = c("intercept", "length0", "area_ucb", "scaled_level", "adj_density_creek_chub",
+                  labels = c("intercept", "length0", "area_ucb", "mean_level", "adj_density_creek_chub",
                              "adj_density_bluehead_chub", "adj_density_green_sunfish", "adj_density_redbreast_sunfish"),
                   col = c("black", "blue", "tan", "deeppink1" ,"orange", "slateblue", "springgreen4", "firebrick2"))
+
+}
+
 

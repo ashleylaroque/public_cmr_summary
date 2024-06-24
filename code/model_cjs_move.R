@@ -16,14 +16,14 @@ model {
       ## - phi = phi_day^(Interval): 
       ## -- cumulative survival from one occasion to the next
       ## -- log-transformed log(phi) = Interval * log(phi_day)
-      logit(phi_day[i, t]) <- mu.phi + beta * Sm[i, t]
+      logit(phi_day[i, t]) <- mu.phi #+ eps_phi[t]
       log(phi[i, t]) <- Intv_m[i, t] * log(phi_day[i, t])
     } #t
   } #i
   
-  for (t in 1:(Nocc - 1)) {
-    eps_phi[t] ~ dnorm(0, tau_phi)
-  }
+ # for (t in 1:(Nocc - 1)) {
+  #  eps_phi[t] ~ dnorm(0, tau_phi)
+ # }
   
   for (i in 1:Nind) {
     for (t in (Fc[i] + 1):Nocc) {
@@ -32,7 +32,7 @@ model {
   }
   
   alpha ~ dnorm(0, 0.01)
-  beta ~ dnorm(0, 0.01)
+
   
   mean.phi ~ dunif(0, 1)               # Prior for mean survival
   mu.phi <- log(mean.phi / (1 - mean.phi)) # Logit transformation
@@ -81,7 +81,7 @@ data {
   ## reorganize capture-recapture Y
   for (n in 1:Nobs) {
     Ym[Id_tag_y[n], Id_occ_y[n]] <- Y[n] # recapture matrix
-    Sm[Id_tag_y[n], Id_occ_y[n]] <- Season[n] # season matrix
+    Sm[Id_tag_y[n], Id_occ_y[n]] <- Season[n] # season matrix (winter/summer)
   }
   
   for (n in 1:Nint) {

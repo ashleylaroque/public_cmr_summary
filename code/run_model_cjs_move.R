@@ -87,9 +87,8 @@ list_est <- foreach(x = usp) %do% {
                            yes = 1,
                            no = 0)) %>% 
     distinct(occasion,
-             season) %>% 
+             season,) %>% 
     arrange(occasion)
-  
   
   df_y <- left_join(df_y, df_season)
   
@@ -160,7 +159,7 @@ list_est <- foreach(x = usp) %do% {
   
   ## mcmc setup ####
   n_ad <- 500
-  n_iter <- 15000
+  n_iter <- 20000
   n_thin <- max(3, ceiling(n_iter / 500)) #happens second want chains to converge 
   n_burn <- ceiling(max(10, n_iter/2)) #happens first and gets rid of noise 
   n_sample <- ceiling(n_iter / n_thin)
