@@ -148,7 +148,6 @@ list_est <- foreach(x = usp) %do% {
             "mu.p",
             "mu.phi",
             "alpha",
-            "beta",
             "mean.phi",
             "sd_phi")
   
@@ -195,7 +194,7 @@ list_est <- foreach(x = usp) %do% {
     mutate(species = x)
   
   return(cout)
-}
+
 
 ## extract median zeta (= seasonal detection probability)
 df_zeta <- lapply(list_est,
@@ -210,9 +209,10 @@ df_zeta <- lapply(list_est,
                                              "summer"))
                   }) %>% 
   bind_rows()
+}
 
 ## export
-saveRDS(list_est, file = "data_formatted/cjs_output.rds")
+saveRDS(list_est, file = "data_formatted/output_cjs.rds")
 saveRDS(df_zeta, file = "data_formatted/data_detection.rds")
 saveRDS(df_season, file = "data_formatted/data_season.rds")
 

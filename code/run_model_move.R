@@ -17,7 +17,7 @@ df_move0 <- readRDS("data_formatted/data_move.rds") %>%
 
 df_zeta <- readRDS("data_formatted/data_detection.rds") # comes from 'run_model_cjs_move'
 df_season <- readRDS("data_formatted/data_season.rds") # comes from 'run_model_cjs_move'
-df_water_level <- readRDS("data_formatted/data_water_level.rds")   # comes from 'format_water_level'
+df_water_pres <- readRDS("data_formatted/data_water_pressure.rds")   # comes from 'format_water_level'
 
 
 df_den <- readRDS("data_formatted/data_density.rds") %>% 
@@ -44,7 +44,7 @@ df_move <- df_move0 %>% # movement dataframe
   left_join(df_h, # add habitat variables 
             by = c("occasion0" = "occasion",
                    "section0" = "section")) %>% 
-  left_join(df_water_level, # add water level fluctuations
+  left_join(df_water_pres, # add water level fluctuations
             by = c("occasion0" = "occasion")) %>% 
   mutate(intv = as.numeric(datetime1 - datetime0),
          y = ifelse(is.na(section1), 0, 1)) %>% 
@@ -80,12 +80,12 @@ list_est <- foreach(x = usp) %do% {
   X <- df_i %>% 
     dplyr::select(length0,    # length of individual
                   area_ucb,   # area of undercut bank coverage
-                  mean_level, # water level fluctuation
+                  #mean_wpres, # water pressure
                   adj_density_creek_chub, # seasonally adjusted density
                   adj_density_bluehead_chub,
                   adj_density_green_sunfish,
                   adj_density_redbreast_sunfish) %>% 
-    mutate(across(.cols = c(length0, area_ucb, mean_level, starts_with("adj_density")),
+    mutate(across(.cols = c(length0, area_ucb, starts_with("adj_density")),
                   .fns = function(x) c(scale(x)))) %>% 
     model.matrix(~., data = .)
   
@@ -128,13 +128,47 @@ list_est <- foreach(x = usp) %do% {
     relocate(var)
 }
 
+## export
+saveRDS(list_est, file = "data_formatted/output_move.rds")
+
 list_est[[1]]
 list_est[[2]]
 list_est[[3]]
 list_est[[4]]
 
-fig <- foreach(x = list_est) %do% {
+bhc <- output_move[[1]]
+bhc <- bhc %>% 
+  rename(median = "50%",
+         upper = "97.5%",
+         lower = "2.5%")
+
+fig <- ggplot(bhc, aes(y = var)) +
+  geom_pointrange(aes(x = median, xmax = upper, xmin = lower)) +
+  geom_vline(xintercept = 0, color = "black") +
+  labs(title = "MCMC Parameter Estimate",
+       x = "Posterior Median with CI") +
+  theme_minimal()
+fig
+
+ for(i in 1:length(output_move)) {
+   
+  output_move[i] <- rename(median = "50%",
+          upper = "97.5%",
+          lower = "2.5%")
   
+   fig[i] <- ggplot(output_move[i], aes(y = var)) +
+     geom_pointrange(aes(x = median, xmax = upper, xmin = lower)) +
+     geom_vline(xintercept = 0, color = "black") +
+     labs(title = "MCMC Parameter Estimate",
+          x = "Posterior Median with CI") +
+     theme_minimal()
+   
+
+  
+}
+
+fig[1]
+
 MCMCvis::MCMCplot(post$mcmc,
                   params = "b",
                   main = "MCMC Parameter Estimate",
@@ -142,7 +176,4 @@ MCMCvis::MCMCplot(post$mcmc,
                   labels = c("intercept", "length0", "area_ucb", "mean_level", "adj_density_creek_chub",
                              "adj_density_bluehead_chub", "adj_density_green_sunfish", "adj_density_redbreast_sunfish"),
                   col = c("black", "blue", "tan", "deeppink1" ,"orange", "slateblue", "springgreen4", "firebrick2"))
-
-}
-
 
