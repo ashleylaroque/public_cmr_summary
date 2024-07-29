@@ -61,7 +61,8 @@ df_move <- df_move0 %>% # movement dataframe
 usp <- c("green_sunfish",
          "redbreast_sunfish",
          "creek_chub",
-         "bluehead_chub") %>% 
+         "bluehead_chub",
+         "striped_jumprock") %>% 
   sort()
 
 list_est <- foreach(x = usp) %do% {
@@ -84,7 +85,8 @@ list_est <- foreach(x = usp) %do% {
                   adj_density_creek_chub, # seasonally adjusted density
                   adj_density_bluehead_chub,
                   adj_density_green_sunfish,
-                  adj_density_redbreast_sunfish) %>% 
+                  adj_density_redbreast_sunfish,
+                  adj_density_striped_jumprock) %>% 
     mutate(across(.cols = c(length0, area_ucb, starts_with("adj_density")),
                   .fns = function(x) c(scale(x)))) %>% 
     model.matrix(~., data = .)
@@ -135,6 +137,12 @@ list_est[[1]]
 list_est[[2]]
 list_est[[3]]
 list_est[[4]]
+list_est[[5]]
+
+
+
+# Ignore --> playing with figures will move later-----------------------------------------------------------------
+
 
 bhc <- output_move[[1]]
 bhc <- bhc %>% 

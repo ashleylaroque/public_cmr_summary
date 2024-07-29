@@ -33,7 +33,8 @@ intv0 <- df_tag0 %>%
 usp <- c("bluehead_chub",
          "creek_chub",
          "green_sunfish",
-         "redbreast_sunfish") %>%
+         "redbreast_sunfish",
+         "striped_jumprock") %>%
   sort()
 
 list_est <- foreach(x = usp) %do% {
@@ -220,3 +221,6 @@ list_est[[1]]
 list_est[[2]]
 list_est[[3]]
 list_est[[4]]
+list_est[[5]]
+
+
