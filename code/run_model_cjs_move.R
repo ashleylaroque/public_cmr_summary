@@ -33,8 +33,7 @@ intv0 <- df_tag0 %>%
 usp <- c("bluehead_chub",
          "creek_chub",
          "green_sunfish",
-         "redbreast_sunfish",
-         "striped_jumprock") %>%
+         "redbreast_sunfish") %>%
   sort()
 
 list_est <- foreach(x = usp) %do% {
@@ -82,7 +81,7 @@ list_est <- foreach(x = usp) %do% {
   
   ## append season column to df_y
   df_season <- df_tag %>% 
-    mutate(month = format(datetime, "%m") %>% 
+    mutate(month = format(datetime, "%m"), 
              as.numeric(month),
            season = ifelse(between(month, 4, 9),
                            yes = 1,
@@ -195,7 +194,7 @@ list_est <- foreach(x = usp) %do% {
     mutate(species = x)
   
   return(cout)
-
+}
 
 ## extract median zeta (= seasonal detection probability)
 df_zeta <- lapply(list_est,
@@ -210,7 +209,7 @@ df_zeta <- lapply(list_est,
                                              "summer"))
                   }) %>% 
   bind_rows()
-}
+
 
 ## export
 saveRDS(list_est, file = "data_formatted/output_cjs.rds")
@@ -221,6 +220,4 @@ list_est[[1]]
 list_est[[2]]
 list_est[[3]]
 list_est[[4]]
-list_est[[5]]
-
 

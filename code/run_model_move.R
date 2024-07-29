@@ -61,8 +61,7 @@ df_move <- df_move0 %>% # movement dataframe
 usp <- c("green_sunfish",
          "redbreast_sunfish",
          "creek_chub",
-         "bluehead_chub",
-         "striped_jumprock") %>% 
+         "bluehead_chub") %>% 
   sort()
 
 list_est <- foreach(x = usp) %do% {
@@ -85,8 +84,7 @@ list_est <- foreach(x = usp) %do% {
                   adj_density_creek_chub, # seasonally adjusted density
                   adj_density_bluehead_chub,
                   adj_density_green_sunfish,
-                  adj_density_redbreast_sunfish,
-                  adj_density_striped_jumprock) %>% 
+                  adj_density_redbreast_sunfish) %>% 
     mutate(across(.cols = c(length0, area_ucb, starts_with("adj_density")),
                   .fns = function(x) c(scale(x)))) %>% 
     model.matrix(~., data = .)
@@ -133,30 +131,19 @@ list_est <- foreach(x = usp) %do% {
 ## export
 saveRDS(list_est, file = "data_formatted/output_move.rds")
 
+## check for convergence 
+# a few values are ~1.12/1.13 do those need to be at 1.10 for us to say it has truly converged? seems like yes
 list_est[[1]]
 list_est[[2]]
 list_est[[3]]
 list_est[[4]]
-list_est[[5]]
 
 
 
 # Ignore --> playing with figures will move later-----------------------------------------------------------------
 
 
-bhc <- output_move[[1]]
-bhc <- bhc %>% 
-  rename(median = "50%",
-         upper = "97.5%",
-         lower = "2.5%")
 
-fig <- ggplot(bhc, aes(y = var)) +
-  geom_pointrange(aes(x = median, xmax = upper, xmin = lower)) +
-  geom_vline(xintercept = 0, color = "black") +
-  labs(title = "MCMC Parameter Estimate",
-       x = "Posterior Median with CI") +
-  theme_minimal()
-fig
 
  for(i in 1:length(output_move)) {
    
@@ -177,11 +164,11 @@ fig
 
 fig[1]
 
-MCMCvis::MCMCplot(post$mcmc,
-                  params = "b",
-                  main = "MCMC Parameter Estimate",
-                  xlab = "Posterior Median with CI", 
-                  labels = c("intercept", "length0", "area_ucb", "mean_level", "adj_density_creek_chub",
-                             "adj_density_bluehead_chub", "adj_density_green_sunfish", "adj_density_redbreast_sunfish"),
-                  col = c("black", "blue", "tan", "deeppink1" ,"orange", "slateblue", "springgreen4", "firebrick2"))
+# MCMCvis::MCMCplot(post$mcmc,
+#                   params = "b",
+#                   main = "MCMC Parameter Estimate",
+#                   xlab = "Posterior Median with CI", 
+#                   labels = c("intercept", "length0", "area_ucb", "mean_level", "adj_density_creek_chub",
+#                              "adj_density_bluehead_chub", "adj_density_green_sunfish", "adj_density_redbreast_sunfish"),
+#                   col = c("black", "blue", "tan", "deeppink1" ,"orange", "slateblue", "springgreen4", "firebrick2"))
 
