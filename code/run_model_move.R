@@ -81,8 +81,8 @@ list_est <- foreach(x = usp) %do% {
     dplyr::select(length0,    # length of individual
                   area_ucb,   # area of undercut bank coverage
                   #mean_wpres, # water pressure
-                  adj_density_creek_chub, # seasonally adjusted density
                   adj_density_bluehead_chub,
+                  adj_density_creek_chub, # seasonally adjusted density
                   adj_density_green_sunfish,
                   adj_density_redbreast_sunfish) %>% 
     mutate(across(.cols = c(length0, area_ucb, starts_with("adj_density")),
@@ -131,44 +131,92 @@ list_est <- foreach(x = usp) %do% {
 ## export
 saveRDS(list_est, file = "data_formatted/output_move.rds")
 
-## check for convergence 
+## check for convergence and save as .csv
 # a few values are ~1.12/1.13 do those need to be at 1.10 for us to say it has truly converged? seems like yes
-list_est[[1]]
-list_est[[2]]
-list_est[[3]]
-list_est[[4]]
+bhc <- list_est[[1]]
+write_csv(bhc, "data_formatted/df_bhc.csv")
+crc <- list_est[[2]]
+write_csv(crc, "data_formatted/df_crc.csv")
+gsf <- list_est[[3]]
+write_csv(gsf, "data_formatted/df_gsf.csv")
+rbs <- list_est[[4]]
+write_csv(rbs, "data_formatted/df_rbs.csv")
 
-
+df_out <- list.files("data_formatted",
+              pattern = "df_",
+              full.names = TRUE) %>% 
+  lapply(read_csv) %>% 
+  bind_rows()
 
 # Ignore --> playing with figures will move later-----------------------------------------------------------------
 
+dat_fig <- df_out %>% 
+  select(y,
+         para,
+         "50%",
+         "97.5%",
+         "2.5%") %>% 
+  rename(Species = y,
+         Estimate = "50%" ,
+         Upper95 = "97.5%" ,
+         Lower95 = "2.5%") %>% 
+  filter(str_detect(para, "b")) %>% 
+  mutate(para = case_when(para == 'b[1]' ~ 'Intercept',
+                          para == 'b[2]' ~ 'Length',
+                          para == 'b[3]' ~ 'UCB Area',
+                          para == 'b[4]' ~ 'Density Creek Chub',
+                          para == 'b[5]' ~ 'Density Bluehead Chub',
+                          para == 'b[6]' ~ 'Density Green Sunfish',
+                          para == 'b[7]' ~ 'Density Redbreast Sunfish')) %>% 
+  mutate(para = factor(para, levels = rev(unique(para))))
 
-
-
- for(i in 1:length(output_move)) {
-   
-  output_move[i] <- rename(median = "50%",
-          upper = "97.5%",
-          lower = "2.5%")
+## plot theme
+plt_theme <- theme_bw() + theme(
+  plot.background = element_blank(),
   
-   fig[i] <- ggplot(output_move[i], aes(y = var)) +
-     geom_pointrange(aes(x = median, xmax = upper, xmin = lower)) +
-     geom_vline(xintercept = 0, color = "black") +
-     labs(title = "MCMC Parameter Estimate",
-          x = "Posterior Median with CI") +
-     theme_minimal()
-   
-
+  panel.background = element_rect(grey(0.99)),
+  panel.border = element_rect(),
   
-}
+  panel.grid = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  
+  panel.grid.major.x = element_blank(),
+  panel.grid.major.y = element_blank(),
+  panel.grid.minor.x = element_blank(),
+  panel.grid.minor.y = element_blank(),
+  
+  strip.background = element_blank(),
+  strip.text.x = element_text(size = 15),
+  strip.text.y = element_text(size = 15),
+  axis.title = element_text(size = 15)
+)
 
-fig[1]
 
-# MCMCvis::MCMCplot(post$mcmc,
-#                   params = "b",
-#                   main = "MCMC Parameter Estimate",
-#                   xlab = "Posterior Median with CI", 
-#                   labels = c("intercept", "length0", "area_ucb", "mean_level", "adj_density_creek_chub",
-#                              "adj_density_bluehead_chub", "adj_density_green_sunfish", "adj_density_redbreast_sunfish"),
-#                   col = c("black", "blue", "tan", "deeppink1" ,"orange", "slateblue", "springgreen4", "firebrick2"))
+theme_set(plt_theme)
+pd <- position_dodge(0.3)
+
+fig <- dat_fig %>% 
+  ggplot(aes(x = Estimate, y = para, color = Species)) +
+  geom_errorbar(aes(xmin = Lower95, xmax = Upper95),
+                width = 0,
+                position = pd) +
+  geom_point(position = pd) +
+  geom_vline(xintercept = 0,
+             lty = 2,
+             col = "gray") +
+  ylab(NULL)
+fig
+
+dat_fig %>% 
+  ggplot(aes(x = Estimate, y = para, color = para)) +
+  geom_errorbar(aes(xmin = Lower95, xmax = Upper95),
+                width = 0,
+                position = pd) +
+  geom_point(position = pd) +
+  geom_vline(xintercept = 0,
+             lty = 2,
+             col = "gray") +
+  ylab(NULL) +
+  facet_grid(~Species)
 
