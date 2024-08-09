@@ -26,7 +26,7 @@ df_den <- readRDS("data_formatted/data_density.rds") %>%
                            season == 1 ~ "summer")) %>% 
    left_join(df_zeta,
             by = c("species", "season")) %>% 
-  mutate(adj_density = (density * estimate)) 
+  mutate(adj_density = (density / estimate))
 
 df_den_adj <- df_den %>% 
   pivot_wider(id_cols = c(occasion, section, area),
