@@ -10,21 +10,21 @@ model {
   zeta[2] <- 1 / (1 + exp(-(mu.p + alpha)))
   
   ## priors
+  
+  ## - phi_day: survival prob per day
+  ## - phi = phi_day^(Interval): 
+  ## -- cumulative survival from one occasion to the next
+  ## -- log-transformed log(phi) = Interval * log(phi_day)
   for (i in 1:Nind){
     for (t in Fc[i]:(Nocc - 1)){
-      ## - phi_day: survival prob per day
-      ## - phi = phi_day^(Interval): 
-      ## -- cumulative survival from one occasion to the next
-      ## -- log-transformed log(phi) = Interval * log(phi_day)
-      logit(phi_day[i, t]) <- mu.phi #+ eps_phi[t]
+      logit(phi_day[i, t]) <- mu.phi
       log(phi[i, t]) <- Intv_m[i, t] * log(phi_day[i, t])
     } #t
   } #i
   
- # for (t in 1:(Nocc - 1)) {
-  #  eps_phi[t] ~ dnorm(0, tau_phi)
- # }
-  
+  ## - p: detection probability
+  ## - alpha: seasonal effect
+  ## - Sm: season index matrix (0 = winter, 1 = summer)
   for (i in 1:Nind) {
     for (t in (Fc[i] + 1):Nocc) {
       logit(p[i, t]) <- mu.p + alpha * Sm[i, t]
@@ -32,29 +32,28 @@ model {
   }
   
   alpha ~ dnorm(0, 0.01)
-
   
-  mean.phi ~ dunif(0, 1)               # Prior for mean survival
+  mean.phi ~ dunif(0, 1) # Prior for mean survival
   mu.phi <- log(mean.phi / (1 - mean.phi)) # Logit transformation
-  mean.p ~ dunif(0, 1)                 # Prior for mean recapture
-  mu.p <- log(mean.p / (1 - mean.p))
   
-  tau_phi ~ dscaled.gamma(2.5, 6)
-  sd_phi <- 1 / sqrt(tau_phi)
+  mean.p ~ dunif(0, 1) # Prior for mean recapture
+  mu.p <- log(mean.p / (1 - mean.p)) # Logit transformation
   
   ## likelihood
   for (i in 1:Nind){
-    
-    # define latent state at first capture
-    # set one because the survival state is known
+    ## define latent state at first capture
+    ## set one because the survival state is known
     z[i, Fc[i]] <- 1
     
     for (t in (Fc[i] + 1):Nocc){
-      # state process
+      ## state process
       mu_s[i, t] <- phi[i, t - 1] * z[i, t - 1] 
       z[i, t] ~ dbern(mu_s[i, t]) 
       
-      # observation process
+      ## observation process
+      ## - Ym: recapture matrix
+      ## - z: survival state
+      ## - xi: stay state
       mu_o[i,t] <- p[i, t] * z[i, t] * xi[i,t]
       Ym[i,t] ~ dbern(mu_o[i,t])
     } #t
@@ -62,10 +61,12 @@ model {
   
   # movement model ----------------------------------------------------------
   ## prior
-  sd_x ~ dunif(0, 1000)
-  tau_x <- pow(sd_x, -2)
+  tau_x ~ dscaled.gamma(500, 6)
+  sd_x <- sqrt(1 / tau_x)
   
   ## likelihood
+  ## - Xm: location matrix
+  ## - xi: stay state, 1 = stay, 0 = move out from the study section
   for (i in 1:Nind) {
     for (t in (Fc[i] + 1):Nocc) {
       Xm[i, t] ~ dnorm(Xm[i, t - 1], tau_x) # gross movement
