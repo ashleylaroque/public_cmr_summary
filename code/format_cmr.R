@@ -20,7 +20,7 @@ source("code/format_habitat.R")
 
 # ## download data for pit tags
 # ## run only when data need to be updated
-# drive_download("data_cmr_north_campus_v1_1_2",
+# drive_download("data_cmr_v1_1_5",
 #                type = "csv",
 #                path = "data_raw/data_cmr_src.csv",
 #                overwrite = T)
