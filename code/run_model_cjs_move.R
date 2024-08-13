@@ -156,8 +156,8 @@ list_est <- foreach(x = usp) %do% {
   mcjs <- runjags::read.jagsfile("code/model_cjs_move.R")
   
   ## mcmc setup ####
-  n_ad <- 100
-  n_iter <- 10000
+  n_ad <- 500
+  n_iter <- 20000
   n_thin <- max(3, ceiling(n_iter / 500)) #happens second want chains to converge 
   n_burn <- ceiling(max(10, n_iter/2)) #happens first and gets rid of noise 
   n_sample <- ceiling(n_iter / n_thin)
