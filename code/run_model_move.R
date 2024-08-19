@@ -17,7 +17,7 @@ df_move0 <- readRDS("data_formatted/data_move.rds") %>%
 
 df_zeta <- readRDS("data_formatted/data_detection.rds") # comes from 'run_model_cjs_move'
 df_season <- readRDS("data_formatted/data_season.rds") # comes from 'run_model_cjs_move'
-df_water_pres <- readRDS("data_formatted/data_water_pressure.rds")   # comes from 'format_water_level'
+df_hobo <- readRDS("data_formatted/data_water_hobo.rds")   # comes from 'format_water_level'
 
 
 df_den <- readRDS("data_formatted/data_density.rds") %>% 
@@ -44,7 +44,7 @@ df_move <- df_move0 %>% # movement dataframe
   left_join(df_h, # add habitat variables 
             by = c("occasion0" = "occasion",
                    "section0" = "section")) %>% 
-  left_join(df_water_pres, # add water level fluctuations
+  left_join(df_hobo, # add water temp
             by = c("occasion0" = "occasion")) %>% 
   mutate(intv = as.numeric(datetime1 - datetime0),
          y = ifelse(is.na(section1), 0, 1)) %>% 
@@ -78,15 +78,20 @@ list_est <- foreach(x = usp) %do% {
   
   ## select predictors
   X <- df_i %>% 
-    dplyr::select(length0,    # length of individual
+    dplyr::select(length0,    # total length of individual
                   area_ucb,   # area of undercut bank coverage
-                  #mean_wpres, # water pressure
-                  adj_density_bluehead_chub,
-                  adj_density_creek_chub, # seasonally adjusted density
+                  mean_temp,  # temp
+                  adj_density_bluehead_chub, # seasonally adjusted density
+                  adj_density_creek_chub, 
                   adj_density_green_sunfish,
                   adj_density_redbreast_sunfish) %>% 
-    mutate(across(.cols = c(length0, area_ucb, starts_with("adj_density")),
-                  .fns = function(x) c(scale(x)))) %>% 
+    mutate(int_bhc = length0 * adj_density_bluehead_chub, # interactive term for each species
+           int_crc = length0 * adj_density_creek_chub,
+           int_gsf = length0 * adj_density_green_sunfish,
+           int_rbs = length0 * adj_density_redbreast_sunfish,
+      across(.cols = c(length0, area_ucb, mean_temp, 
+                       starts_with("adj_density"), starts_with("int_")),
+             .fns = function(x) c(scale(x)))) %>% 
     model.matrix(~., data = .)
   
   list_jags$X <- X
