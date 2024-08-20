@@ -85,12 +85,8 @@ list_est <- foreach(x = usp) %do% {
                   adj_density_creek_chub, 
                   adj_density_green_sunfish,
                   adj_density_redbreast_sunfish) %>% 
-    mutate(int_bhc = length0 * adj_density_bluehead_chub, # interactive term for each species
-           int_crc = length0 * adj_density_creek_chub,
-           int_gsf = length0 * adj_density_green_sunfish,
-           int_rbs = length0 * adj_density_redbreast_sunfish,
-      across(.cols = c(length0, area_ucb, mean_temp, 
-                       starts_with("adj_density"), starts_with("int_")),
+    mutate(across(.cols = c(length0, area_ucb, mean_temp, 
+                       starts_with("adj_density")),
              .fns = function(x) c(scale(x)))) %>% 
     model.matrix(~., data = .)
   
@@ -169,10 +165,11 @@ dat_fig <- df_out %>%
   mutate(para = case_when(para == 'b[1]' ~ 'Intercept',
                           para == 'b[2]' ~ 'Length',
                           para == 'b[3]' ~ 'UCB Area',
-                          para == 'b[4]' ~ 'Density Creek Chub',
-                          para == 'b[5]' ~ 'Density Bluehead Chub',
-                          para == 'b[6]' ~ 'Density Green Sunfish',
-                          para == 'b[7]' ~ 'Density Redbreast Sunfish')) %>% 
+                          para == 'b[4]' ~ 'Mean Temperature',
+                          para == 'b[5]' ~ 'Density Creek Chub',
+                          para == 'b[6]' ~ 'Density Bluehead Chub',
+                          para == 'b[7]' ~ 'Density Green Sunfish',
+                          para == 'b[8]' ~ 'Density Redbreast Sunfish')) %>% 
   mutate(para = factor(para, levels = rev(unique(para))))
 
 ## plot theme
