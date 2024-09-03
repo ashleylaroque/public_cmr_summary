@@ -1,0 +1,36 @@
+---
+title: README
+output: github_document
+knit: (function(inputFile, encoding) {
+        rmarkdown::render(inputFile,
+                          encoding = encoding, 
+                          output_dir = here::here())
+      })
+---
+
+```{r, include=F}
+knitr::opts_chunk$set(echo = FALSE,
+                      message = FALSE,
+                      warning = FALSE)
+```
+
+
+# Header 1
+
+normal text
+
+## Header 2
+
+normal text
+
+### Header 3
+
+normal text
+
+```{r setup}
+
+source(here::here("code/library.R"))
+sessionInfo()
+
+```
+
