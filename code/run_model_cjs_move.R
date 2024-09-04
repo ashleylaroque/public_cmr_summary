@@ -87,7 +87,7 @@ list_est <- foreach(x = usp) %do% {
                            yes = 1,
                            no = 0)) %>% 
     distinct(occasion,
-             season,) %>% 
+             season) %>% 
     arrange(occasion)
   
   df_y <- left_join(df_y, df_season)
