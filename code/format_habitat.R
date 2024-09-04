@@ -6,15 +6,15 @@
 # setup -------------------------------------------------------------------
 
 ## remove objects
-rm(list = ls())
+#rm(list = ls())
 
 source(here::here("code/library.R"))
 source(here::here("code/function.R"))
 
 # Read Habitat Data-----------------------------------------------------------------
 
-# ## download data for pit tags
-# ## run only when data need to be updated
+## download data for pit tags
+## run only when data need to be updated
 # drive_download("data_habitat_v1_1_1",
 #                type = "csv",
 #                path = "data_raw/data_habitat.csv",

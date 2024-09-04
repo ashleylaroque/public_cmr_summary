@@ -16,7 +16,7 @@ model {
     X1[i] ~ dnorm(X0[i], tau[i])
     tau[i] <- pow(sd_m[i], -2)
     
-    log(sd_m[i]) <- inprod(b[], X[i,]) + log(sqrt(Intv[i]))
+    log(sd_m[i]) <- inprod(b[], X[i,]) + log(Intv[i])
   }
   
 }
