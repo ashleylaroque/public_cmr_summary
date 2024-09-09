@@ -114,13 +114,14 @@ list_est <- foreach(x = usp) %do% {
   post <- runjags::run.jags(model = m$model,
                             data = list_jags,
                             monitor = para,
-                            burnin = 1000,
+                            burnin = 10000,
                             sample = 1000,
-                            thin = 5,
+                            thin = 20, 
                             n.chains = n_chain,
                             inits = inits,
                             method = "parallel",
                             module = "glm")
+  # check into priors after if it still doesn't converge 
   
   MCMCvis::MCMCsummary(post$mcmc) %>% 
     as_tibble(rownames = "para") %>% 
@@ -133,7 +134,7 @@ list_est <- foreach(x = usp) %do% {
 saveRDS(list_est, file = "data_formatted/output_move.rds")
 
 ## check for convergence and save as .csv
-# a few values are ~1.12/1.13 do those need to be at 1.10 for us to say it has truly converged? seems like yes
+
 bhc <- list_est[[1]]
 write_csv(bhc, "data_formatted/df_bhc.csv")
 crc <- list_est[[2]]
@@ -143,4 +144,7 @@ write_csv(gsf, "data_formatted/df_gsf.csv")
 rbs <- list_est[[4]]
 write_csv(rbs, "data_formatted/df_rbs.csv")
 
-
+list_est[[1]]
+list_est[[2]]
+list_est[[3]]
+list_est[[4]]

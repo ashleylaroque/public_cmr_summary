@@ -190,11 +190,11 @@ saveRDS(df_den, file = "data_formatted/data_density.rds")
 
 # Ignore for now --> Ashley calculating numbers for cmr results  ----------
 
-d1 <- df_cmr %>% 
-  filter(species != c("bluegill", "striped_jumprock"),
-         mortality == "n") 
-length(unique(d1$tag_id)) # gets how many fish we tagged
-ftable(d1$recap) # how many are recap not including duplicated
+# d1 <- df_cmr %>% 
+#   filter(species != c("bluegill", "striped_jumprock"),
+#          mortality == "n") 
+# length(unique(d1$tag_id)) # gets how many fish we tagged
+# ftable(d1$recap) # how many are recap not including duplicated
 
 
 
