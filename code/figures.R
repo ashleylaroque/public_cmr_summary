@@ -32,7 +32,7 @@ df_n %>%
   group_by(species) %>%
   tally(n) %>%
   ungroup() %>%
-ggplot(aes(reorder(species, -n), n)) +
+  ggplot(aes(reorder(species, -n), n)) +
   geom_col() +
   theme(axis.text.x = element_text(angle = 45, vjust = .5))
 
@@ -41,23 +41,23 @@ ggplot(aes(reorder(species, -n), n)) +
 # Correlation plot fish and habitat  
 ## sunfish
 chart.Correlation(df_d_m[, c("d_bluegill", "d_green_sunfish", "d_redbreast_sunfish",
-                                    "depth_mean", "velocity_mean", "substrate_mean", 
-                                    "area", "area_ucb")], method="spearman", histogram=TRUE, cex = 10) 
+                             "depth_mean", "velocity_mean", "substrate_mean", 
+                             "area", "area_ucb")], method="spearman", histogram=TRUE, cex = 10) 
 ## chubs
 chart.Correlation(df_d_m[, c("d_creek_chub", "d_bluehead_chub", "d_striped_jumprock",
-                                    "depth_mean", "velocity_mean", "substrate_mean", 
-                                    "area", "area_ucb")], method="spearman", histogram=TRUE, cex = 10) 
+                             "depth_mean", "velocity_mean", "substrate_mean", 
+                             "area", "area_ucb")], method="spearman", histogram=TRUE, cex = 10) 
 
 
 # Histograms of movement frequency ----------------------------------------
 df_m <- df_move %>% 
- mutate(move = (section1 - section0) * 10 - 5)
+  mutate(move = (section1 - section0) * 10 - 5)
 
 # Histogram of Cyprinid and Catastomid Movement per occasion at recap
 cent.move.dist <- gghistogram(df_m[df_m$species %in% c('bluehead_chub','creek_chub', 'striped_jumprock'), ], 
                               x = "move", fill = "lightgrey",
-            xlab = "Distance (m)", ylab = "Frequency", binwidth = 10, 
-            facet.by = c("occasion1","species")) +
+                              xlab = "Distance (m)", ylab = "Frequency", binwidth = 10, 
+                              facet.by = c("occasion1","species")) +
   geom_vline(xintercept = 0, linetype="dashed", color = "red", size=0.9) 
 cent.move.dist
 
@@ -92,11 +92,11 @@ df_am <- df_m %>%
   filter(species %in% c("bluehead_chub", "creek_chub", "green_sunfish", "redbreast_sunfish"))
 
 all_movement <- gghistogram(df_am, x= "abs_move", fill = "dodgerblue",
-            xlab = "Distance (m)", ylab = "Frequency", binwidth = 10) +
+                            xlab = "Distance (m)", ylab = "Frequency", binwidth = 10) +
   #geom_vline(xintercept = 0, linetype="dashed", color = "red", size=0.9) +
   facet_wrap2(species ~ ., 
-             scales = "free",
-             labeller = as_labeller(fish_labs))+
+              scales = "free",
+              labeller = as_labeller(fish_labs))+
   theme(axis.text.x = element_text(angle = 45, vjust = .5)) 
 all_movement
 
@@ -276,7 +276,7 @@ fig_size <- df_am %>%
               strip = strip1,
               labeller = labeller(species = species.labs)) +
   geom_smooth(method = "glm", 
-            method.args = list(family = "gaussian"), se=F) +
+              method.args = list(family = "gaussian"), se=F) +
   scale_color_manual(values=c("darkcyan", "maroon", "mediumpurple1", "steelblue3"), 
                      name="Species") +
   labs(x= "Length at Capture (mm)", y= "Absolute Movement (m)") +
@@ -305,7 +305,7 @@ fig_den <- df_am %>%
              switch = "x",  # use switch = "y" to swap strip to the left side
              labeller = labeller(species = species.labs, opponent = opp.labs)) +
   # ylim(0, 1.4) +
-   geom_smooth(method = "glm", 
+  geom_smooth(method = "glm", 
               method.args = list(family = "gaussian"), se=F) +
   scale_color_manual(values=c("darkcyan", "maroon", "mediumpurple1", "steelblue3"), 
                      name="Species") +
@@ -434,8 +434,8 @@ afs_size1 <- df_am %>%
               scales = "free",
               strip = strip2,
               labeller = labeller(species = species.labs)) +
-#  geom_smooth(method = "glm", 
- #            method.args = list(family = "gaussian"), se=F) +
+  #  geom_smooth(method = "glm", 
+  #            method.args = list(family = "gaussian"), se=F) +
   scale_color_manual(values=c("maroon", "mediumpurple1"), 
                      name="Species") +
   labs(x= "Length at Capture (mm)", y= "Absolute Movement (m)") +

@@ -24,7 +24,7 @@ df_den <- readRDS("data_formatted/data_density.rds") %>%
   left_join(df_season, by = "occasion") %>% 
   mutate(season= case_when(season == 0 ~ "winter",
                            season == 1 ~ "summer")) %>% 
-   left_join(df_zeta,
+  left_join(df_zeta,
             by = c("species", "season")) %>% 
   mutate(adj_density = (density / estimate))
 
@@ -85,9 +85,11 @@ list_est <- foreach(x = usp) %do% {
                   adj_density_creek_chub, 
                   adj_density_green_sunfish,
                   adj_density_redbreast_sunfish) %>% 
-    mutate(across(.cols = c(length0, area_ucb, mean_temp, 
-                       starts_with("adj_density")),
-             .fns = function(x) c(scale(x)))) %>% 
+    mutate(across(.cols = c(length0,
+                            area_ucb,
+                            mean_temp, 
+                            starts_with("adj_density")),
+                  .fns = function(x) c(scale(x)))) %>% 
     model.matrix(~., data = .)
   
   list_jags$X <- X
