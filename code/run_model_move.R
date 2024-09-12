@@ -64,6 +64,14 @@ usp <- c("green_sunfish",
          "bluehead_chub") %>% 
   sort()
 
+## mcmc setup ####
+n_ad <- 1000
+n_iter <- 12500
+n_thin <- max(3, ceiling(n_iter / 1000))
+n_burn <- ceiling(max(10, n_iter))
+n_sample <- ceiling(n_iter / n_thin)
+n_chain <- 3
+
 list_est <- foreach(x = usp) %do% {
   
   df_i <- filter(df_move, species == x)
@@ -116,9 +124,10 @@ list_est <- foreach(x = usp) %do% {
   post <- runjags::run.jags(model = m$model,
                             data = list_jags,
                             monitor = para,
-                            burnin = 10000,
-                            sample = 1000,
-                            thin = 20, 
+                            adapt = n_ad,
+                            burnin = n_burn,
+                            sample = n_sample,
+                            thin = n_thin, 
                             n.chains = n_chain,
                             inits = inits,
                             method = "parallel",
@@ -132,21 +141,22 @@ list_est <- foreach(x = usp) %do% {
     relocate(var)
 }
 
-## export
-saveRDS(list_est, file = "data_formatted/output_move.rds")
 
-## check for convergence and save as .csv
+# check convergence -------------------------------------------------------
 
-bhc <- list_est[[1]]
-write_csv(bhc, "data_formatted/df_bhc.csv")
-crc <- list_est[[2]]
-write_csv(crc, "data_formatted/df_crc.csv")
-gsf <- list_est[[3]]
-write_csv(gsf, "data_formatted/df_gsf.csv")
-rbs <- list_est[[4]]
-write_csv(rbs, "data_formatted/df_rbs.csv")
+## return max Rhat value for each species
+## each element represents max Rhat for each species
+v_rhat <- sapply(list_est,
+                 function(data) max(data$Rhat))
 
-list_est[[1]]
-list_est[[2]]
-list_est[[3]]
-list_est[[4]]
+## print max Rhat across species
+print(max(v_rhat))
+
+# export ------------------------------------------------------------------
+
+## results will not be exported unless converged
+if (max(v_rhat) < 1.1) {
+  saveRDS(list_est, file = "data_formatted/output_move.rds")
+}
+
+print(list_est)

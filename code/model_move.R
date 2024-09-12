@@ -1,10 +1,10 @@
 model {
   
   for (k in 1:K) {
-    b[k] ~ dnorm(0, 0.1)
+    b[k] ~ dnorm(0, 1)
   }
   
-  p ~ dunif(0, 1)
+  p ~ dnorm(0, 1)T(0, 1)
   
   for (i in 1:Nsample) {
     ## observation model for recaptured or not

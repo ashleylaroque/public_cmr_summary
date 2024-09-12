@@ -158,8 +158,8 @@ list_est <- foreach(x = usp) %do% {
   ## mcmc setup ####
   n_ad <- 500
   n_iter <- 20000
-  n_thin <- max(3, ceiling(n_iter / 500)) #happens second want chains to converge 
-  n_burn <- ceiling(max(10, n_iter/2)) #happens first and gets rid of noise 
+  n_thin <- max(3, ceiling(n_iter / 1000)) #happens second want chains to converge 
+  n_burn <- ceiling(max(10, n_iter / 2)) #happens first and gets rid of noise 
   n_sample <- ceiling(n_iter / n_thin)
   n_chain <- 3
   
