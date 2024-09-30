@@ -19,12 +19,12 @@ source(here::here("code/library.R"))
 #                overwrite = T)
 # 
 # ## data from occasion 11+
-# drive_download("05_29_24_AirTemp",
+# drive_download("20240930_air",
 #                type = "csv",
 #                path = "data_raw/data_air_temp2.csv",
 #                overwrite = T)
 # 
-# drive_download("05_29_24_WaterTemp",
+# drive_download("20240930_water",
 #                type = "csv",
 #                path = "data_raw/data_water_temp2.csv",
 #                overwrite = T)

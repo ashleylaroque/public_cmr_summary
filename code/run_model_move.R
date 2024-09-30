@@ -37,7 +37,7 @@ df_h <- readRDS("data_formatted/data_habitat.rds") %>%
   dplyr::select(-area)
 
 ## combine movement, density, and habitat
-df_move <- df_move0 %>% # movement dataframe
+df_combined <- df_move0 %>% # movement dataframe
   left_join(df_den_adj, # add density values
             by = c("occasion0" = "occasion",
                    "section0" = "section")) %>% 
@@ -55,6 +55,8 @@ df_move <- df_move0 %>% # movement dataframe
   ungroup() %>% 
   select(-c(starts_with("n_")))
 
+saveRDS(df_combined, file = "data_formatted/data_combined.rds")
+
 
 # run jags ----------------------------------------------------------------
 
@@ -66,15 +68,15 @@ usp <- c("green_sunfish",
 
 ## mcmc setup ####
 n_ad <- 1000
-n_iter <- 12500
+n_iter <- 20000
 n_thin <- max(3, ceiling(n_iter / 1000))
-n_burn <- ceiling(max(10, n_iter))
+n_burn <- ceiling(max(10, n_iter / 2))
 n_sample <- ceiling(n_iter / n_thin)
 n_chain <- 3
 
 list_est <- foreach(x = usp) %do% {
   
-  df_i <- filter(df_move, species == x)
+  df_i <- filter(df_combined, species == x)
   
   ## data for jags
   list_jags <- with(df_i,

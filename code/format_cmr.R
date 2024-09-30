@@ -20,10 +20,10 @@ source("code/format_habitat.R")
 
 # ## download data for pit tags
 # ## run only when data need to be updated
-# drive_download("data_cmr_v1_1_5",
-#                type = "csv",
-#                path = "data_raw/data_cmr_src.csv",
-#                overwrite = T)
+drive_download("data_cmr_v1_1_6",
+               type = "csv",
+               path = "data_raw/data_cmr_src.csv",
+               overwrite = T)
 
 ## df_cmr0: data frame before cleaning
 df_cmr0 <- read_csv(here::here("data_raw/data_cmr_src.csv")) %>% 
@@ -114,7 +114,7 @@ saveRDS(df_move,
 
 # ## data on non-target species
 # ## run only when data need to be updated
-# drive_download("data_non_target_v1_1_1",
+# drive_download("data_non_target_v1_1_2",
 #                type = "csv",
 #                path = "data_raw/data_non_target.csv",
 #                overwrite = T )
@@ -187,14 +187,6 @@ df_den <- df_n %>%
 saveRDS(df_den, file = "data_formatted/data_density.rds")
 
 
-
-# Ignore for now --> Ashley calculating numbers for cmr results  ----------
-
-# d1 <- df_cmr %>% 
-#   filter(species != c("bluegill", "striped_jumprock"),
-#          mortality == "n") 
-# length(unique(d1$tag_id)) # gets how many fish we tagged
-# ftable(d1$recap) # how many are recap not including duplicated
 
 
 
