@@ -223,45 +223,69 @@ opp.labs <- c("Density Bluehead Chub", "Density Creek Chub", "Density Green Sunf
 names(opp.labs) <- c("adj_density_bluehead_chub", "adj_density_creek_chub" ,"adj_density_green_sunfish", "adj_density_redbreast_sunfish")
 strip1 <- strip_themed(background_x = elem_list_rect(fill = c("darkcyan", "maroon", "mediumpurple1", "steelblue3")))
 
-
-### Need Help!
-df_pred <- df_output %>% 
+## coef values
+df_coef <- df_output %>% 
   bind_rows() %>% 
   rename(lower = "2.5%",
          median = "50%",
          upper = "97.5%",
-         species = "y")
+         species = "y") %>% 
+  filter(species == "bluehead_chub")
 
-df_len <- df_combined %>% 
-  group_by(species) %>% 
-  reframe(tag_id = 1:100,
-          length = seq(min(length0, na.rm = T),
-                         max(length0, na.rm = T),
-                         length = 100))
+## get predictor names
+x_name <- df_coef %>% 
+  filter(var != "(Intercept)") %>% 
+  pull(var)
 
-dat_predicted <- df_pred %>% 
-  left_join(df_len, by = "species")
+## coef vector
+v_b <- df_coef %>% 
+  pull(median)
 
+df_y <- foreach(v = x_name,
+                .combine = bind_rows) %do% {
+                  ## v loops for predictors
+                  
+                  ## index for a focus predictor
+                  bid <- with(df_coef, which(var == v))
+                  
+                  ## x values - 
+                  df_x <- df_combined  %>% 
+                    filter(species == "bluehead_chub") %>% 
+                    rename(x = all_of("length0")) %>% 
+                    reframe(x_value = seq(min(x, na.rm = T),
+                                          max(x, na.rm = T),
+                                          length = 100),
+                            scl_x = (x_value - mean(x)) / sd(x)) %>% 
+                    mutate(log_sigma = v_b[1] + v_b[bid] * scl_x,
+                           y = (exp(log_sigma) * sqrt(2)) / sqrt(pi),
+                           focus = v)
+                  
+                  return(df_x)
+                }
 
-
-ggplot(df_combined, 
-       aes(x = length0,
-           y = abs_move,
-           color = species)) +
-  geom_point(alpha = 0.2) +
-  geom_line(data = dat_predicted,
-            aes(x = length, y = median)) +
-  facet_wrap2(~ species, 
-              scales = "free",
-              strip = strip1,
-              labeller = labeller(species = species.labs)) +
-  scale_color_manual(values=c("darkcyan", "maroon", "mediumpurple1", "steelblue3"), 
-                     name="Species") +
-  labs(x= "Length at Capture (mm)", y= "Absolute Movement (m)") +
-  theme(legend.position = "none",
-        #text = element_text(size = 20),
-        strip.text = element_text(color = 'white'))
-fig_size 
+# df_combined %>% 
+#   filter(species == "bluehead_chub") %>% 
+#   ggplot(aes(x = length0,
+#              y = abs_move / intv,
+#              color = species)) +
+#   geom_point(alpha = 0.5) +
+#   geom_line(data = df_pred,
+#             aes(x = length,
+#                 y = y))
+#   
+#   # geom_line(data = dat_predicted,
+#   #           aes(x = length, y = median)) +
+#   # facet_wrap2(~ species, 
+#   #             scales = "free",
+#   #             strip = strip1,
+#   #             labeller = labeller(species = species.labs)) +
+#   # scale_color_manual(values=c("darkcyan", "maroon", "mediumpurple1", "steelblue3"), 
+#   #                    name="Species") +
+#   # labs(x= "Length at Capture (mm)", y= "Absolute Movement (m)") +
+#   # theme(legend.position = "none",
+#   #       #text = element_text(size = 20),
+#   #       strip.text = element_text(color = 'white'))
+# fig_size 
 
 
 fig_den <- df_combined %>% 
