@@ -114,15 +114,14 @@ saveRDS(df_move,
 
 # ## data on non-target species
 # ## run only when data need to be updated
-# drive_download("data_non_target_v1_1_2",
+# drive_download("data_non_target_v1_1_3",
 #                type = "csv",
 #                path = "data_raw/data_non_target.csv",
 #                overwrite = T )
 
 ## get abundance for untagged individuals per section per occasion
 df_nt <- read_csv(here::here("data_raw/data_non_target.csv")) %>% 
-  rename_at(vars(everything()),
-            .funs = str_to_lower) %>% # make all column headers lowercase
+  rename_with(.fn = str_to_lower) %>% # make all column headers lowercase
   mutate(occasion = as_factor(occasion),
          occasion = as.numeric(occasion),
          species = case_when(species == "BHC" ~ "bluehead_chub",
