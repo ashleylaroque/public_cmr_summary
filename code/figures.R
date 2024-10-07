@@ -251,7 +251,7 @@ df_y <- foreach(v = x_name,
                   ## x values - 
                   df_x <- df_combined  %>% 
                     filter(species == "bluehead_chub") %>% 
-                    rename(x = all_of("length0")) %>% 
+                    rename(x = all_of(v)) %>% 
                     reframe(x_value = seq(min(x, na.rm = T),
                                           max(x, na.rm = T),
                                           length = 100),
