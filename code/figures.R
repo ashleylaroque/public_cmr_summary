@@ -44,6 +44,10 @@ list_size <- foreach(x = usp) %do% {
 df_size <- list_size %>% 
   bind_rows()
 
+species.labs <- c("Bluehead Chub", "Creek Chub", "Green Sunfish", "Redbreast Sunfish")
+names(species.labs) <- c("bluehead_chub", "creek_chub", "green_sunfish", "redbreast_sunfish")
+
+
 # Plot Theme --------------------------------------------------------------
 
 ## plot theme
@@ -197,10 +201,6 @@ dat_fig %>%
              col = "gray") +
   ylab(NULL)
 
-
-species.labs <- c("Bluehead Chub", "Creek Chub", "Green Sunfish", "Redbreast Sunfish")
-names(species.labs) <- c("bluehead_chub", "creek_chub", "green_sunfish", "redbreast_sunfish")
-
 fig_est <- dat_fig %>% 
   ggplot(aes(x = Estimate, y = para, color = para)) +
   geom_errorbar(aes(xmin = Lower95, xmax = Upper95),
@@ -229,34 +229,28 @@ df_pred <- df_output %>%
   bind_rows() %>% 
   rename(lower = "2.5%",
          median = "50%",
-         upper = "97.5%") %>% 
-  mutate(species = rep(c("Bluehead Chub", "Creek Chub", "Green Sunfish", "Redbreast Sunfish"),
-                       each = nrow(df_output[[1]]))) %>% 
-  mutate(tag_id = str_extract_all(. , pattern = "\\[.{1,}\\]")) %>% 
-  mutate(tag_id = as.numeric(str_remove_all(.$tag_id, pattern = "\\[|\\]")))
+         upper = "97.5%",
+         species = "y")
 
 df_len <- df_combined %>% 
   group_by(species) %>% 
-  summarize(tag_id = 1:100,
-            length = seq(min(length0, na.rm = T),
+  reframe(tag_id = 1:100,
+          length = seq(min(length0, na.rm = T),
                          max(length0, na.rm = T),
                          length = 100))
 
-dat_predicted <- dat_pred %>% 
-  left_join(dat_len, by = c("tag_id", "species"))
+dat_predicted <- df_pred %>% 
+  left_join(df_len, by = "species")
 
 
-# fig_size <- df_predicted %>% 
-#   filter(species %in% c('bluehead_chub', 'creek_chub', 'green_sunfish','redbreast_sunfish')) %>% 
-#   drop_na(move) %>% 
 
-ggplot(dat_predicted, 
+ggplot(df_combined, 
        aes(x = length0,
            y = abs_move,
            color = species)) +
   geom_point(alpha = 0.2) +
-  geom_line(data = df_pred,
-            aes(y = y_pred)) +
+  geom_line(data = dat_predicted,
+            aes(x = length, y = median)) +
   facet_wrap2(~ species, 
               scales = "free",
               strip = strip1,
