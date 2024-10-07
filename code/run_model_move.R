@@ -8,7 +8,6 @@ rm(list = ls())
 source("code/library.R")
 source("code/function.R")
 
-
 # data --------------------------------------------------------------------
 
 ## format data
@@ -67,8 +66,8 @@ usp <- c("green_sunfish",
   sort()
 
 ## mcmc setup ####
-n_ad <- 1000
-n_iter <- 20000
+n_ad <- 1500
+n_iter <- 25000
 n_thin <- max(3, ceiling(n_iter / 1000))
 n_burn <- ceiling(max(10, n_iter / 2))
 n_sample <- ceiling(n_iter / n_thin)

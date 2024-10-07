@@ -81,7 +81,7 @@ list_est <- foreach(x = usp) %do% {
   
   ## append season column to df_y
   df_season <- df_tag %>% 
-    mutate(month = format(datetime, "%m") %>%
+    mutate(month = format(datetime, "%m") %>% 
              as.numeric(month),
            season = ifelse(between(month, 4, 9),
                            yes = 1,
@@ -156,7 +156,7 @@ list_est <- foreach(x = usp) %do% {
   mcjs <- runjags::read.jagsfile("code/model_cjs_move.R")
   
   ## mcmc setup ####
-  n_ad <- 500
+  n_ad <- 1000
   n_iter <- 20000
   n_thin <- max(3, ceiling(n_iter / 1000)) #happens second want chains to converge 
   n_burn <- ceiling(max(10, n_iter / 2)) #happens first and gets rid of noise 

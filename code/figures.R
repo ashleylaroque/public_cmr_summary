@@ -8,11 +8,12 @@ source(here::here("code/library.R"))
 source(here::here("code/format_cmr.R"))
 source(here::here("code/format_habitat.R"))
 df_combined <- readRDS("data_formatted/data_combined.rds")  # comes from 'run_model_move'
+df_output <- readRDS("data_formatted/output_move.rds")  # comes from 'run_model_move'
 
 df_combined <- df_combined %>% 
   mutate(move = (section1 - section0) * 10 - 5, 
          abs_move = abs(move),
-         month = format(datetime0, "%m") %>%
+         month = format(datetime0, "%m") %>% 
            as.numeric(month),
          season = ifelse(between(month, 4, 9),
                          yes = 1, # summer
@@ -29,15 +30,20 @@ usp <- c("bluehead_chub",
 
 list_size <- foreach(x = usp) %do% {
   
-  df_size <- filter(df_combined, species == x)
+  df_size <- df_combined %>% 
+    select(species, length0) %>% 
+    drop_na(length0) %>% 
+    filter(species == x)
   
   mean_len <- df_size %>% 
-    select(species, length0, tag_id) %>% 
-    drop_na(length0) %>% 
     summarise(mean(length0),
-              sd(length0))
-  
+           sd(length0),
+           species = x)
 }
+
+df_size <- list_size %>% 
+  bind_rows()
+
 # Plot Theme --------------------------------------------------------------
 
 ## plot theme
@@ -92,6 +98,10 @@ df_n %>%
   ggplot(aes(reorder(species, -n), n)) +
   geom_col() +
   theme(axis.text.x = element_text(angle = 45, vjust = .5))
+
+# visualize mean size
+ggplot(df_combined, aes(species, length0)) +
+  geom_boxplot() 
 
 # Correlations of fish abundance with habitat -----------------------------------------------------------------
 
@@ -151,10 +161,8 @@ gghistogram(df_combined, x= "abs_move", fill = "dodgerblue",
 
 # Model estimate ----------------------------------------------------------
 
-df_output <- readRDS("data_formatted/output_move.rds") %>% 
-  bind_rows()
-
 dat_fig <- df_output %>% 
+  bind_rows() %>% 
   select(y,
          para,
          "50%",
@@ -213,16 +221,42 @@ fig_est
 
 opp.labs <- c("Density Bluehead Chub", "Density Creek Chub", "Density Green Sunfish", "Density Redbreast Sunfish")
 names(opp.labs) <- c("adj_density_bluehead_chub", "adj_density_creek_chub" ,"adj_density_green_sunfish", "adj_density_redbreast_sunfish")
-
 strip1 <- strip_themed(background_x = elem_list_rect(fill = c("darkcyan", "maroon", "mediumpurple1", "steelblue3")))
 
-fig_size <- df_combined %>% 
-  filter(species %in% c('bluehead_chub', 'creek_chub', 'green_sunfish','redbreast_sunfish')) %>% 
-  drop_na(move) %>% 
-  ggplot(aes(x = length0,
-             y = abs_move,
-             color = species)) +
-  geom_point() +
+
+### Need Help!
+df_pred <- df_output %>% 
+  bind_rows() %>% 
+  rename(lower = "2.5%",
+         median = "50%",
+         upper = "97.5%") %>% 
+  mutate(species = rep(c("Bluehead Chub", "Creek Chub", "Green Sunfish", "Redbreast Sunfish"),
+                       each = nrow(df_output[[1]]))) %>% 
+  mutate(tag_id = str_extract_all(. , pattern = "\\[.{1,}\\]")) %>% 
+  mutate(tag_id = as.numeric(str_remove_all(.$tag_id, pattern = "\\[|\\]")))
+
+df_len <- df_combined %>% 
+  group_by(species) %>% 
+  summarize(tag_id = 1:100,
+            length = seq(min(length0, na.rm = T),
+                         max(length0, na.rm = T),
+                         length = 100))
+
+dat_predicted <- dat_pred %>% 
+  left_join(dat_len, by = c("tag_id", "species"))
+
+
+# fig_size <- df_predicted %>% 
+#   filter(species %in% c('bluehead_chub', 'creek_chub', 'green_sunfish','redbreast_sunfish')) %>% 
+#   drop_na(move) %>% 
+
+ggplot(dat_predicted, 
+       aes(x = length0,
+           y = abs_move,
+           color = species)) +
+  geom_point(alpha = 0.2) +
+  geom_line(data = df_pred,
+            aes(y = y_pred)) +
   facet_wrap2(~ species, 
               scales = "free",
               strip = strip1,
@@ -231,7 +265,7 @@ fig_size <- df_combined %>%
                      name="Species") +
   labs(x= "Length at Capture (mm)", y= "Absolute Movement (m)") +
   theme(legend.position = "none",
-        text = element_text(size = 20),
+        #text = element_text(size = 20),
         strip.text = element_text(color = 'white'))
 fig_size 
 
