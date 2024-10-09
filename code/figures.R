@@ -1,18 +1,22 @@
 # R version 4.3.1
 # Ashley LaRoque
 
-
-# Set up  -----------------------------------------------------------------
 rm(list = ls())
+
+# Load Data ---------------------------------------------------------------
+
 source(here::here("code/library.R"))
 source(here::here("code/format_cmr.R"))
 source(here::here("code/format_habitat.R"))
 df_combined <- readRDS("data_formatted/data_combined.rds")  # comes from 'run_model_move'
 df_output <- readRDS("data_formatted/output_move.rds")  # comes from 'run_model_move'
 
+# Set up  -----------------------------------------------------------------
+
+# format data for figures
 df_combined <- df_combined %>% 
   mutate(move = (section1 - section0) * 10 - 5, 
-         abs_move = abs(move),
+         abs_move = abs(move), # generate absolute movement for figures
          month = format(datetime0, "%m") %>% 
            as.numeric(month),
          season = ifelse(between(month, 4, 9),
@@ -20,14 +24,14 @@ df_combined <- df_combined %>%
                          no = 0)) %>% 
   filter(species %in% c("bluehead_chub", "creek_chub", "green_sunfish", "redbreast_sunfish"))
 
-
-# mean size of each species 
+# separate target species for use in loops
 usp <- c("bluehead_chub",
          "creek_chub",
          "green_sunfish",
          "redbreast_sunfish") %>%
   sort()
 
+# calculate mean size of each species 
 list_size <- foreach(x = usp) %do% {
   
   df_size <- df_combined %>% 
@@ -43,10 +47,6 @@ list_size <- foreach(x = usp) %do% {
 
 df_size <- list_size %>% 
   bind_rows()
-
-species.labs <- c("Bluehead Chub", "Creek Chub", "Green Sunfish", "Redbreast Sunfish")
-names(species.labs) <- c("bluehead_chub", "creek_chub", "green_sunfish", "redbreast_sunfish")
-
 
 # Plot Theme --------------------------------------------------------------
 
@@ -69,11 +69,18 @@ plt_theme <- theme_bw() + theme(
   strip.background = element_blank(),
   strip.text.x = element_text(size = 15),
   strip.text.y = element_text(size = 15),
-  axis.title = element_text(size = 15)
-)
-
+  axis.title = element_text(size = 15))
 
 theme_set(plt_theme)
+
+pd <- position_dodge(0.3)
+
+species.labs <- c("Bluehead Chub", "Creek Chub", "Green Sunfish", "Redbreast Sunfish")
+names(species.labs) <- c("bluehead_chub", "creek_chub", "green_sunfish", "redbreast_sunfish")
+
+opp.labs <- c("Density Bluehead Chub", "Density Creek Chub", "Density Green Sunfish", "Density Redbreast Sunfish")
+names(opp.labs) <- c("adj_density_bluehead_chub", "adj_density_creek_chub" ,"adj_density_green_sunfish", "adj_density_redbreast_sunfish")
+strip1 <- strip_themed(background_x = elem_list_rect(fill = c("darkcyan", "maroon", "mediumpurple1", "steelblue3")))
 
 # General Plots -----------------------------------------------------------
 # visualize section recapture vs section cap relationship
@@ -173,7 +180,7 @@ dat_fig <- df_output %>%
          "97.5%",
          "2.5%") %>% 
   rename(Species = y,
-         Estimate = "50%" ,
+         Median = "50%" ,
          Upper95 = "97.5%" ,
          Lower95 = "2.5%") %>% 
   filter(str_detect(para, "b")) %>% 
@@ -187,8 +194,6 @@ dat_fig <- df_output %>%
                           para == 'b[8]' ~ 'Density Redbreast Sunfish')) %>% 
   mutate(para = factor(para, levels = rev(unique(para))))
 
-pd <- position_dodge(0.3)
-
 # estimates all together colored by species
 dat_fig %>%
   ggplot(aes(x = Estimate, y = para, color = Species)) +
@@ -201,6 +206,7 @@ dat_fig %>%
              col = "gray") +
   ylab(NULL)
 
+# estimates faceted by species 
 fig_est <- dat_fig %>% 
   ggplot(aes(x = Estimate, y = para, color = para)) +
   geom_errorbar(aes(xmin = Lower95, xmax = Upper95),
@@ -217,11 +223,7 @@ fig_est <- dat_fig %>%
 fig_est
 
 
-# abs move vs body size ---------------------------------------------------
-
-opp.labs <- c("Density Bluehead Chub", "Density Creek Chub", "Density Green Sunfish", "Density Redbreast Sunfish")
-names(opp.labs) <- c("adj_density_bluehead_chub", "adj_density_creek_chub" ,"adj_density_green_sunfish", "adj_density_redbreast_sunfish")
-strip1 <- strip_themed(background_x = elem_list_rect(fill = c("darkcyan", "maroon", "mediumpurple1", "steelblue3")))
+# Effect of Body Size ---------------------------------------------------
 
 ## coef values
 df_coef <- df_output %>% 
@@ -286,6 +288,9 @@ df_y <- foreach(v = x_name,
 #   #       #text = element_text(size = 20),
 #   #       strip.text = element_text(color = 'white'))
 # fig_size 
+
+
+# Effect of Density -------------------------------------------------------
 
 
 fig_den <- df_combined %>% 
