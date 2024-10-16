@@ -9,7 +9,7 @@ source(here::here("code/library.R"))
 source(here::here("code/format_cmr.R"))
 source(here::here("code/format_habitat.R"))
 df_combined <- readRDS("data_formatted/data_combined.rds")  # comes from 'run_model_move'
-df_output <- readRDS("data_formatted/output_move.rds")  # comes from 'run_model_move'
+list_output <- readRDS("data_formatted/output_move.rds")  # comes from 'run_model_move'
 
 # Set up  -----------------------------------------------------------------
 
@@ -172,7 +172,7 @@ gghistogram(df_combined, x= "abs_move", fill = "dodgerblue",
 
 # Model estimate ----------------------------------------------------------
 
-dat_fig <- df_output %>% 
+dat_fig <- list_output %>% 
   bind_rows() %>% 
   select(y,
          para,
@@ -225,76 +225,44 @@ fig_est
 
 # Effect of Body Size ---------------------------------------------------
 
-list_coef <- foreach(n = usp) %do% {
-             
-  df_coef <- df_output %>% 
-    bind_rows() %>% 
-    rename(lower = "2.5%",
-           median = "50%",
-           upper = "97.5%",
-           species = "y") %>% 
-    filter(species == n)
-}
+df_coef <- list_output %>% 
+  bind_rows() %>% 
+  rename(lower = `2.5%`,
+         upper = `97.5%`,
+         median = `50%`,
+         species = "y")
 
-## get predictor names
 x_name <- df_coef %>% 
-  filter(var != "(Intercept)")
-x_name <- unique(x_name$var)
+  filter(var != "(Intercept)") %>% 
+  pull(var) %>% 
+  unique()
 
-
-list_est <- foreach(i = seq_len(length(list_coef))) %do% {
+df_y <- foreach(k = usp, .combine = bind_rows) %do% {
   
-  v_b <- list_coef[i] %>% 
-    bind_rows() %>% 
+  v_b <- df_coef %>% 
+    filter(species == k) %>% 
     pull(median)
-}
   
-list_x <- foreach(n = usp) %do% {
-  df_x <- df_combined %>% 
-    filter(species == n)
-}
-
-my_list <- list()
-my_list2 <- list()
-
-df_y <- foreach(v = x_name,
-                .combine = bind_rows) %do% {
-                  ## v loops for predictors
-                  
-                  for (i in seq_len(length(list_coef))) {
+  df_x <- foreach(v = x_name,
+                  .combine = bind_rows) %do% {
+                    bid <- which(c("(Intercept)", x_name) == v)        
                     
-                    df_co <- list_coef[i] %>%
-                      bind_rows() 
-                    bid <- with(df_co, which(var == v))
-                    }
-               
-              
-                  for (i in seq_len(length(list_x))) {
-                    
-                    my_list[[i]] <- list_x[i] %>% 
-                      bind_rows() %>%  
+                    df_combined %>%
+                      drop_na(section1) %>% 
+                      filter(species == k) %>% 
                       rename(x = all_of(v)) %>% 
                       reframe(x_value = seq(min(x, na.rm = T),
                                             max(x, na.rm = T),
                                             length = 100),
                               scl_x = (x_value - mean(x)) / sd(x),
-                             species = rep(unique(species))) 
+                              species = rep(unique(species))) %>% 
+                      mutate(log_sigma = v_b[1] + v_b[bid] * scl_x, 
+                             y = (exp(log_sigma) * sqrt(2)) / sqrt(pi),
+                             focus = v)
                   }
   
-                      
-                      for (i in seq_len(length(my_list))) {
-                     
-                       my_list2[[i]] <- my_list[i] %>% 
-                        bind_rows() %>% 
-                        mutate(log_sigma = list_est[[i]][1] + list_est[[i]][bid] * scl_x, 
-                               y = (exp(log_sigma) * sqrt(2)) / sqrt(pi),
-                               focus = v)
-                    }
-                    
+}
 
-                              return(my_list2)
-                }
-      
 
 fig_size <- df_combined %>%
   ggplot(aes(x = length0,
