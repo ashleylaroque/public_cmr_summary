@@ -225,86 +225,120 @@ fig_est
 
 # Effect of Body Size ---------------------------------------------------
 
-## coef values
-df_coef <- df_output %>% 
-  bind_rows() %>% 
-  rename(lower = "2.5%",
-         median = "50%",
-         upper = "97.5%",
-         species = "y") %>% 
-  filter(species == "bluehead_chub")
+list_coef <- foreach(n = usp) %do% {
+             
+  df_coef <- df_output %>% 
+    bind_rows() %>% 
+    rename(lower = "2.5%",
+           median = "50%",
+           upper = "97.5%",
+           species = "y") %>% 
+    filter(species == n)
+}
 
 ## get predictor names
 x_name <- df_coef %>% 
-  filter(var != "(Intercept)") %>% 
-  pull(var)
+  filter(var != "(Intercept)")
+x_name <- unique(x_name$var)
 
-## coef vector
-v_b <- df_coef %>% 
-  pull(median)
+
+list_est <- foreach(i = seq_len(length(list_coef))) %do% {
+  
+  v_b <- list_coef[i] %>% 
+    bind_rows() %>% 
+    pull(median)
+}
+  
+list_x <- foreach(n = usp) %do% {
+  df_x <- df_combined %>% 
+    #rename(x = all_of(v)) %>% 
+    filter(species == n)
+}
+
+my_list <- list()
+my_list2 <- list()
 
 df_y <- foreach(v = x_name,
                 .combine = bind_rows) %do% {
                   ## v loops for predictors
                   
-                  ## index for a focus predictor
-                  bid <- with(df_coef, which(var == v))
-                  
-                  ## x values - 
-                  df_x <- df_combined  %>% 
-                    filter(species == "bluehead_chub") %>% 
-                    rename(x = all_of(v)) %>% 
-                    reframe(x_value = seq(min(x, na.rm = T),
-                                          max(x, na.rm = T),
-                                          length = 100),
-                            scl_x = (x_value - mean(x)) / sd(x)) %>% 
-                    mutate(log_sigma = v_b[1] + v_b[bid] * scl_x,
-                           y = (exp(log_sigma) * sqrt(2)) / sqrt(pi),
-                           focus = v)
-                  
-                  return(df_x)
-                }
+                  for (i in seq_len(length(list_coef))) {
+                    
+                    df_co <- list_coef[i] %>%
+                      bind_rows() 
+                    bid <- with(df_co, which(var == v))
+                    }
+               
+              
+                  for (i in seq_len(length(list_x))) {
+                    
+                    my_list[[i]] <- list_x[i] %>% 
+                      bind_rows() %>%  
+                      rename(x = all_of("length0")) %>% 
+                      reframe(x_value = seq(min(x, na.rm = T),
+                                            max(x, na.rm = T),
+                                            length = 100),
+                              scl_x = (x_value - mean(x)) / sd(x),
+                             species = rep(unique(species))) 
+                  }
+  
+                      
+                      for (i in seq_len(length(my_list))) {
+                     
+                       my_list2[[i]] <- my_list[i] %>% 
+                        bind_rows() %>% 
+                        mutate(log_sigma = list_est[[i]][1] + list_est[[i]][bid] * scl_x, 
+                               y = (exp(log_sigma) * sqrt(2)) / sqrt(pi),
+                               focus = v)
+                    }
+                    
 
-# df_combined %>% 
-#   filter(species == "bluehead_chub") %>% 
-#   ggplot(aes(x = length0,
-#              y = abs_move / intv,
-#              color = species)) +
-#   geom_point(alpha = 0.5) +
-#   geom_line(data = df_pred,
-#             aes(x = length,
-#                 y = y))
-#   
-#   # geom_line(data = dat_predicted,
-#   #           aes(x = length, y = median)) +
-#   # facet_wrap2(~ species, 
-#   #             scales = "free",
-#   #             strip = strip1,
-#   #             labeller = labeller(species = species.labs)) +
-#   # scale_color_manual(values=c("darkcyan", "maroon", "mediumpurple1", "steelblue3"), 
-#   #                    name="Species") +
-#   # labs(x= "Length at Capture (mm)", y= "Absolute Movement (m)") +
-#   # theme(legend.position = "none",
-#   #       #text = element_text(size = 20),
-#   #       strip.text = element_text(color = 'white'))
-# fig_size 
+                              return(my_list2)
+                }
+      
+
+
+
+fig_size <- df_combined %>%
+  ggplot(aes(x = length0,
+             y = abs_move / intv,
+             color = species)) +
+  geom_point(alpha = 0.5) +
+  geom_line(data = df_y %>% 
+            filter(focus == "length0"),
+            aes(x = x_value,
+                y = y)) +
+  facet_wrap2(~ species,
+              scales = "free",
+              strip = strip1,
+              labeller = labeller(species = species.labs)) +
+  scale_color_manual(values=c("darkcyan", "maroon", "mediumpurple1", "steelblue3"),
+                     name="Species") +
+  labs(x= "Length at Capture (mm)", y= "Absolute Movement (m/day)") +
+  theme(legend.position = "none",
+        #text = element_text(size = 20),
+        strip.text = element_text(color = 'white'))
+fig_size
 
 
 # Effect of Density -------------------------------------------------------
 
 
 fig_den <- df_combined %>% 
-  select(species, abs_move, adj_density_bluehead_chub, adj_density_creek_chub, 
+  select(species, intv, abs_move, adj_density_bluehead_chub, adj_density_creek_chub, 
          adj_density_green_sunfish, adj_density_redbreast_sunfish) %>% 
-  filter(species %in% c("bluehead_chub", "creek_chub" ,"green_sunfish", "redbreast_sunfish")) %>% 
   pivot_longer(cols = starts_with("adj_"),
                names_to = "opponent", 
                values_to = "density") %>% 
   drop_na(abs_move) %>% 
-  ggplot(aes(x = density ,
-             y = abs_move, 
+  ggplot(aes(x = density,
+             y = abs_move / intv, 
              color = species)) +
   geom_point(alpha = 0.5) +
+  geom_line(data = df_y %>% 
+              filter(focus %in% c(c("adj_density_bluehead_chub", "adj_density_creek_chub", "adj_density_green_sunfish", "adj_density_redbreast_sunfish"))),
+            aes(x = x_value,
+                y = y)) +
   facet_grid(rows = vars(species),
              cols = vars(opponent),
              scales = "free",
@@ -312,7 +346,7 @@ fig_den <- df_combined %>%
              labeller = labeller(species = species.labs, opponent = opp.labs)) +
   scale_color_manual(values=c("darkcyan", "maroon", "mediumpurple1", "steelblue3"), 
                      name = "Species") +
-  labs(x= "Density (n/m^2)", y= "Absolute Movement (m)") +
+  labs(x= "Density (n/m^2)", y= "Absolute Movement (m/day)") +
   ggtitle("Opponent")+
   theme(legend.position = "none",
         text = element_text(size = 15),
