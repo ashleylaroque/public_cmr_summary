@@ -251,7 +251,6 @@ list_est <- foreach(i = seq_len(length(list_coef))) %do% {
   
 list_x <- foreach(n = usp) %do% {
   df_x <- df_combined %>% 
-    #rename(x = all_of(v)) %>% 
     filter(species == n)
 }
 
@@ -274,7 +273,7 @@ df_y <- foreach(v = x_name,
                     
                     my_list[[i]] <- list_x[i] %>% 
                       bind_rows() %>%  
-                      rename(x = all_of("length0")) %>% 
+                      rename(x = all_of(v)) %>% 
                       reframe(x_value = seq(min(x, na.rm = T),
                                             max(x, na.rm = T),
                                             length = 100),
@@ -297,8 +296,6 @@ df_y <- foreach(v = x_name,
                 }
       
 
-
-
 fig_size <- df_combined %>%
   ggplot(aes(x = length0,
              y = abs_move / intv,
@@ -320,6 +317,9 @@ fig_size <- df_combined %>%
         strip.text = element_text(color = 'white'))
 fig_size
 
+gsf <- df_y %>% 
+  filter(species == "green_sunfish",
+         focus == "length0")
 
 # Effect of Density -------------------------------------------------------
 
