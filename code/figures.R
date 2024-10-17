@@ -42,8 +42,8 @@ list_size <- foreach(x = usp) %do% {
   
   mean_len <- df_size %>% 
     summarise(mean(length0),
-           sd(length0),
-           species = x)
+              sd(length0),
+              species = x)
 }
 
 df_size <- list_size %>% 
@@ -119,29 +119,29 @@ ggplot(df_combined, aes(species, length0)) +
 
 ## sunfish
 chart.Correlation(df_combined[, c("adj_density_green_sunfish", "adj_density_redbreast_sunfish",
-                             "depth_mean", "velocity_mean", "substrate_mean", 
-                             "area", "area_ucb")], method="spearman", histogram=TRUE, cex = 10) 
+                                  "depth_mean", "velocity_mean", "substrate_mean", 
+                                  "area", "area_ucb")], method="spearman", histogram=TRUE, cex = 10) 
 ## chubs
 chart.Correlation(df_combined[, c("adj_density_creek_chub", "adj_density_bluehead_chub",
-                             "depth_mean", "velocity_mean", "substrate_mean", 
-                             "area", "area_ucb")], method="spearman", histogram=TRUE, cex = 10) 
+                                  "depth_mean", "velocity_mean", "substrate_mean", 
+                                  "area", "area_ucb")], method="spearman", histogram=TRUE, cex = 10) 
 
 
 # Histograms of movement frequency ----------------------------------------
 
 # Histogram of Cyprinid and Catastomid Movement per occasion at recap
 gghistogram(df_combined[df_combined$species %in% c('bluehead_chub','creek_chub', 'striped_jumprock'), ], 
-                              x = "move", fill = "lightgrey",
-                              xlab = "Distance (m)", ylab = "Frequency", binwidth = 10, 
-                              facet.by = c("occasion1","species")) +
+            x = "move", fill = "lightgrey",
+            xlab = "Distance (m)", ylab = "Frequency", binwidth = 10, 
+            facet.by = c("occasion1","species")) +
   geom_vline(xintercept = 0, linetype="dashed", color = "red", size=0.9) 
 
 
 # Histogram of Centrarchids Movement
 gghistogram(df_combined[df_combined$species %in% c('bluegill','green_sunfish','redbreast_sunfish'), ], 
-                              x = "move", fill = "lightgrey",
-                              xlab = "Distance (m)", ylab = "Frequency", binwidth = 10, 
-                              facet.by = c("occasion1","species")) +
+            x = "move", fill = "lightgrey",
+            xlab = "Distance (m)", ylab = "Frequency", binwidth = 10, 
+            facet.by = c("occasion1","species")) +
   geom_vline(xintercept = 0, linetype="dashed", color = "red", size=0.9)
 
 
@@ -282,7 +282,7 @@ fig_size <- df_combined %>%
              color = species)) +
   geom_point(alpha = 0.5) +
   geom_line(data = df_y %>% 
-            filter(focus == "log_length"),
+              filter(focus == "log_length"),
             aes(x = x_value,
                 y = y)) +
   facet_wrap2(~ species,
