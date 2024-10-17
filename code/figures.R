@@ -9,7 +9,12 @@ source(here::here("code/library.R"))
 source(here::here("code/format_cmr.R"))
 source(here::here("code/format_habitat.R"))
 df_combined <- readRDS("data_formatted/data_combined.rds")  # comes from 'run_model_move'
-list_output <- readRDS("data_formatted/output_move.rds")  # comes from 'run_model_move'
+df_output <- readRDS("data_formatted/output_move.rds") %>% 
+  bind_rows() %>% 
+  rename(species = "y",
+         median = "50%" ,
+         upper95 = "97.5%" ,
+         lower95 = "2.5%")# comes from 'run_model_move'
 
 # Set up  -----------------------------------------------------------------
 
@@ -32,7 +37,8 @@ usp <- c("bluehead_chub",
   sort()
 
 # calculate mean size of each species 
-list_size <- foreach(x = usp) %do% {
+df_size <- foreach(x = usp,
+                   .combine = bind_rows) %do% {
   
   df_size <- df_combined %>% 
     select(species, length0) %>% 
@@ -45,8 +51,7 @@ list_size <- foreach(x = usp) %do% {
            species = x)
 }
 
-df_size <- list_size %>% 
-  bind_rows()
+
 
 # Plot Theme --------------------------------------------------------------
 
@@ -172,17 +177,7 @@ gghistogram(df_combined, x= "abs_move", fill = "dodgerblue",
 
 # Model estimate ----------------------------------------------------------
 
-dat_fig <- list_output %>% 
-  bind_rows() %>% 
-  select(y,
-         para,
-         "50%",
-         "97.5%",
-         "2.5%") %>% 
-  rename(Species = y,
-         Median = "50%" ,
-         Upper95 = "97.5%" ,
-         Lower95 = "2.5%") %>% 
+dat_fig <- df_output %>% 
   filter(str_detect(para, "b")) %>% 
   mutate(para = case_when(para == 'b[1]' ~ 'Intercept',
                           para == 'b[2]' ~ 'Length',
@@ -196,8 +191,8 @@ dat_fig <- list_output %>%
 
 # estimates all together colored by species
 dat_fig %>%
-  ggplot(aes(x = Estimate, y = para, color = Species)) +
-  geom_errorbar(aes(xmin = Lower95, xmax = Upper95),
+  ggplot(aes(x = median, y = para, color = species)) +
+  geom_errorbar(aes(xmin = lower95, xmax = upper95),
                 width = 0,
                 position = pd) +
   geom_point(position = pd) +
@@ -208,8 +203,8 @@ dat_fig %>%
 
 # estimates faceted by species 
 fig_est <- dat_fig %>% 
-  ggplot(aes(x = Estimate, y = para, color = para)) +
-  geom_errorbar(aes(xmin = Lower95, xmax = Upper95),
+  ggplot(aes(x = median, y = para, color = para)) +
+  geom_errorbar(aes(xmin = lower95, xmax = upper95),
                 width = 0,
                 position = pd) +
   geom_point(position = pd) +
@@ -218,28 +213,22 @@ fig_est <- dat_fig %>%
              col = "gray") +
   ylab(NULL) +
   theme(legend.position = "none") +
-  facet_wrap( ~ Species, nrow = 2, ncol = 2, 
-              labeller = labeller(Species = species.labs))
+  facet_wrap( ~ species, nrow = 2, ncol = 2, 
+              labeller = labeller(species = species.labs))
 fig_est
 
 
 # Effect of Body Size ---------------------------------------------------
 
-df_coef <- list_output %>% 
-  bind_rows() %>% 
-  rename(lower = `2.5%`,
-         upper = `97.5%`,
-         median = `50%`,
-         species = "y")
 
-x_name <- df_coef %>% 
+x_name <- df_output %>% 
   filter(var != "(Intercept)") %>% 
   pull(var) %>% 
   unique()
 
 df_y <- foreach(k = usp, .combine = bind_rows) %do% {
   
-  v_b <- df_coef %>% 
+  v_b <- df_output %>% 
     filter(species == k) %>% 
     pull(median)
   
@@ -264,15 +253,23 @@ df_y <- foreach(k = usp, .combine = bind_rows) %do% {
 }
 
 
+df_fig <- df_y %>% 
+  left_join(df_output, by = c("species", "focus" = "var")) %>% 
+  rowwise() %>% 
+  mutate(sig = ifelse(between(0, lower95, upper95), 
+                        "TRUE", "FALSE"))
+
 fig_size <- df_combined %>%
+  drop_na(section1) %>% # figure only includes recap
   ggplot(aes(x = length0,
              y = abs_move / intv,
              color = species)) +
   geom_point(alpha = 0.5) +
-  geom_line(data = df_y %>% 
+  geom_line(data = df_fig %>% 
             filter(focus == "length0"),
             aes(x = x_value,
-                y = y)) +
+                y = y,
+                linetype = ifelse(sig == "TRUE", "solid", "dashed"))) +
   facet_wrap2(~ species,
               scales = "free",
               strip = strip1,
@@ -285,12 +282,8 @@ fig_size <- df_combined %>%
         strip.text = element_text(color = 'white'))
 fig_size
 
-gsf <- df_y %>% 
-  filter(species == "green_sunfish",
-         focus == "length0")
 
 # Effect of Density -------------------------------------------------------
-
 
 fig_den <- df_combined %>% 
   select(species, intv, abs_move, adj_density_bluehead_chub, adj_density_creek_chub, 
@@ -302,18 +295,21 @@ fig_den <- df_combined %>%
   ggplot(aes(x = density,
              y = abs_move / intv, 
              color = species)) +
-  geom_point(alpha = 0.5) +
-  geom_line(data = df_y %>% 
-              filter(focus %in% c(c("adj_density_bluehead_chub", "adj_density_creek_chub", "adj_density_green_sunfish", "adj_density_redbreast_sunfish"))),
+  geom_point(alpha = 0.5) + 
+  geom_line(data = df_fig %>% 
+              filter(str_detect(focus, "adj_density")) %>% 
+              rename(opponent = "focus"),
             aes(x = x_value,
-                y = y)) +
+                y = y,
+                color = species,
+                linetype = ifelse(sig == "TRUE", "solid", "dashed"))) +
   facet_grid(rows = vars(species),
              cols = vars(opponent),
              scales = "free",
              switch = "x",  # use switch = "y" to swap strip to the left side
              labeller = labeller(species = species.labs, opponent = opp.labs)) +
   scale_color_manual(values=c("darkcyan", "maroon", "mediumpurple1", "steelblue3"), 
-                     name = "Species") +
+                     name = "species") +
   labs(x= "Density (n/m^2)", y= "Absolute Movement (m/day)") +
   ggtitle("Opponent")+
   theme(legend.position = "none",
@@ -323,6 +319,7 @@ fig_den <- df_combined %>%
         strip.text = element_text(color = 'white'),
         strip.placement = "outside")
 fig_den
+
 
 fig_density <- ggplot_gtable(ggplot_build(fig_den))
 strip_both <- which(grepl('strip-', fig_density$layout$name))
