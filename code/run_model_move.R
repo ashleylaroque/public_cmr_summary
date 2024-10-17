@@ -87,14 +87,15 @@ list_est <- foreach(x = usp) %do% {
   
   ## select predictors
   X <- df_i %>% 
-    dplyr::select(length0,    # total length of individual
+    mutate(log_length = log(length0)) %>% 
+    dplyr::select(log_length, # log-trans total length of individual
                   area_ucb,   # area of undercut bank coverage
                   mean_temp,  # temp
                   adj_density_bluehead_chub, # seasonally adjusted density
                   adj_density_creek_chub, 
                   adj_density_green_sunfish,
                   adj_density_redbreast_sunfish) %>% 
-    mutate(across(.cols = c(length0,
+    mutate(across(.cols = c(log_length,
                             area_ucb,
                             mean_temp, 
                             starts_with("adj_density")),
@@ -116,7 +117,7 @@ list_est <- foreach(x = usp) %do% {
   for (j in 1:n_chain) inits[[j]]$.RNG.seed <- 100 * j
   
   ## - parameters to be monitored
-  para <- c("b")
+  para <- c("b", "p")
   
   ## model files
   m <- runjags::read.jagsfile("code/model_move.R")
@@ -138,7 +139,7 @@ list_est <- foreach(x = usp) %do% {
   MCMCvis::MCMCsummary(post$mcmc) %>% 
     as_tibble(rownames = "para") %>% 
     mutate(y = x,
-           var = colnames(X)) %>% 
+           var = c(colnames(X), NA)) %>%
     relocate(var)
 }
 

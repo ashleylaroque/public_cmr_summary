@@ -8,7 +8,7 @@ rm(list = ls())
 source(here::here("code/library.R"))
 source(here::here("code/format_cmr.R"))
 source(here::here("code/format_habitat.R"))
-df_combined <- readRDS("data_formatted/data_combined.rds")  # comes from 'run_model_move'
+df_combined <- readRDS("data_formatted/data_combined.rds") # comes from 'run_model_move'
 list_output <- readRDS("data_formatted/output_move.rds")  # comes from 'run_model_move'
 
 # Set up  -----------------------------------------------------------------
@@ -21,7 +21,8 @@ df_combined <- df_combined %>%
            as.numeric(month),
          season = ifelse(between(month, 4, 9),
                          yes = 1, # summer
-                         no = 0)) %>% 
+                         no = 0),
+         log_length = log(length0)) %>% 
   filter(species %in% c("bluehead_chub", "creek_chub", "green_sunfish", "redbreast_sunfish"))
 
 # separate target species for use in loops
@@ -247,30 +248,41 @@ df_y <- foreach(k = usp, .combine = bind_rows) %do% {
                   .combine = bind_rows) %do% {
                     bid <- which(c("(Intercept)", x_name) == v)        
                     
-                    df_combined %>%
-                      drop_na(section1) %>% 
+                    ## rename focused predictor name to `x`
+                    df_v <- df_combined %>%
                       filter(species == k) %>% 
-                      rename(x = all_of(v)) %>% 
+                      rename(x = all_of(v))
+                    
+                    ## calculate mean and sd for standardization
+                    ## - this calculation must be done BEFORE dropping rows
+                    ## - otherwise mean & sd are different from what was used in the model
+                    mu_x <- mean(df_v$x)
+                    sd_x <- sd(df_v$x)
+                    
+                    cout <- df_v %>% 
+                      drop_na(section1) %>% 
                       reframe(x_value = seq(min(x, na.rm = T),
                                             max(x, na.rm = T),
                                             length = 100),
-                              scl_x = (x_value - mean(x)) / sd(x),
+                              scl_x = (x_value - mu_x) / sd_x,
                               species = rep(unique(species))) %>% 
                       mutate(log_sigma = v_b[1] + v_b[bid] * scl_x, 
                              y = (exp(log_sigma) * sqrt(2)) / sqrt(pi),
                              focus = v)
+                    
+                    return(cout)
                   }
   
 }
 
 
 fig_size <- df_combined %>%
-  ggplot(aes(x = length0,
+  ggplot(aes(x = log_length,
              y = abs_move / intv,
              color = species)) +
   geom_point(alpha = 0.5) +
   geom_line(data = df_y %>% 
-            filter(focus == "length0"),
+            filter(focus == "log_length"),
             aes(x = x_value,
                 y = y)) +
   facet_wrap2(~ species,

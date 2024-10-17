@@ -1,11 +1,10 @@
 model {
-  
   ## prior for the intercept
-  b[1] ~ dnorm(0, 0.01)
+  b[1] ~ dnorm(0, pow(10, -2))
   
   ## prior for coefficients
   for (k in 2:K) {
-    b[k] ~ dnorm(0, pow(2.5, -2))
+    b[k] ~ dnorm(0, pow(1, -2))
   }
   
   p ~ dnorm(0, 1)T(0, 1)
