@@ -8,26 +8,32 @@ rm(list = ls())
 source(here::here("code/library.R"))
 source(here::here("code/format_cmr.R"))
 source(here::here("code/format_habitat.R"))
+
 df_combined <- readRDS("data_formatted/data_combined.rds")  # comes from 'run_model_move'
 df_output <- readRDS("data_formatted/output_move.rds") %>% 
   bind_rows() %>% 
   rename(species = "y",
          median = "50%" ,
          upper95 = "97.5%" ,
-         lower95 = "2.5%")# comes from 'run_model_move'
+         lower95 = "2.5%") %>% 
+  drop_na(var) # comes from 'run_model_move'
 
 # Set up  -----------------------------------------------------------------
 
 # format data for figures
 df_combined <- df_combined %>% 
-  mutate(move = (section1 - section0) * 10 - 5, 
+  mutate(move = (section1 - section0) * 10, 
          abs_move = abs(move), # generate absolute movement for figures
          month = format(datetime0, "%m") %>% 
            as.numeric(month),
          season = ifelse(between(month, 4, 9),
                          yes = 1, # summer
-                         no = 0)) %>% 
-  filter(species %in% c("bluehead_chub", "creek_chub", "green_sunfish", "redbreast_sunfish"))
+                         no = 0),
+         log_length = log(length0)) %>% 
+  filter(species %in% c("bluehead_chub",
+                        "creek_chub",
+                        "green_sunfish",
+                        "redbreast_sunfish"))
 
 # separate target species for use in loops
 usp <- c("bluehead_chub",
@@ -37,21 +43,10 @@ usp <- c("bluehead_chub",
   sort()
 
 # calculate mean size of each species 
-df_size <- foreach(x = usp,
-                   .combine = bind_rows) %do% {
-  
-  df_size <- df_combined %>% 
-    select(species, length0) %>% 
-    drop_na(length0) %>% 
-    filter(species == x)
-  
-  mean_len <- df_size %>% 
-    summarise(mean(length0),
-           sd(length0),
-           species = x)
-}
-
-
+df_size <- df_combined %>% 
+  group_by(species) %>% 
+  summarize(mu = mean(length0),
+            sigma = sd(length0))
 
 # Plot Theme --------------------------------------------------------------
 
@@ -123,29 +118,29 @@ ggplot(df_combined, aes(species, length0)) +
 
 ## sunfish
 chart.Correlation(df_combined[, c("adj_density_green_sunfish", "adj_density_redbreast_sunfish",
-                             "depth_mean", "velocity_mean", "substrate_mean", 
-                             "area", "area_ucb")], method="spearman", histogram=TRUE, cex = 10) 
+                                  "depth_mean", "velocity_mean", "substrate_mean", 
+                                  "area", "area_ucb")], method="spearman", histogram=TRUE, cex = 10) 
 ## chubs
 chart.Correlation(df_combined[, c("adj_density_creek_chub", "adj_density_bluehead_chub",
-                             "depth_mean", "velocity_mean", "substrate_mean", 
-                             "area", "area_ucb")], method="spearman", histogram=TRUE, cex = 10) 
+                                  "depth_mean", "velocity_mean", "substrate_mean", 
+                                  "area", "area_ucb")], method="spearman", histogram=TRUE, cex = 10) 
 
 
 # Histograms of movement frequency ----------------------------------------
 
 # Histogram of Cyprinid and Catastomid Movement per occasion at recap
 gghistogram(df_combined[df_combined$species %in% c('bluehead_chub','creek_chub', 'striped_jumprock'), ], 
-                              x = "move", fill = "lightgrey",
-                              xlab = "Distance (m)", ylab = "Frequency", binwidth = 10, 
-                              facet.by = c("occasion1","species")) +
+            x = "move", fill = "lightgrey",
+            xlab = "Distance (m)", ylab = "Frequency", binwidth = 10, 
+            facet.by = c("occasion1","species")) +
   geom_vline(xintercept = 0, linetype="dashed", color = "red", size=0.9) 
 
 
 # Histogram of Centrarchids Movement
 gghistogram(df_combined[df_combined$species %in% c('bluegill','green_sunfish','redbreast_sunfish'), ], 
-                              x = "move", fill = "lightgrey",
-                              xlab = "Distance (m)", ylab = "Frequency", binwidth = 10, 
-                              facet.by = c("occasion1","species")) +
+            x = "move", fill = "lightgrey",
+            xlab = "Distance (m)", ylab = "Frequency", binwidth = 10, 
+            facet.by = c("occasion1","species")) +
   geom_vline(xintercept = 0, linetype="dashed", color = "red", size=0.9)
 
 
@@ -220,7 +215,6 @@ fig_est
 
 # Effect of Body Size ---------------------------------------------------
 
-
 x_name <- df_output %>% 
   filter(var != "(Intercept)") %>% 
   pull(var) %>% 
@@ -236,90 +230,110 @@ df_y <- foreach(k = usp, .combine = bind_rows) %do% {
                   .combine = bind_rows) %do% {
                     bid <- which(c("(Intercept)", x_name) == v)        
                     
-                    df_combined %>%
-                      drop_na(section1) %>% 
+                    ## rename focused predictor name to `x`
+                    df_v <- df_combined %>%
                       filter(species == k) %>% 
-                      rename(x = all_of(v)) %>% 
+                      rename(x = all_of(v))
+                    
+                    ## calculate mean and sd for standardization
+                    ## - this calculation must be done BEFORE dropping rows
+                    ## - otherwise mean & sd are different from what was used in the model
+                    mu_x <- mean(df_v$x)
+                    sd_x <- sd(df_v$x)
+                    
+                    cout <- df_v %>% 
+                      drop_na(section1) %>% 
                       reframe(x_value = seq(min(x, na.rm = T),
                                             max(x, na.rm = T),
                                             length = 100),
-                              scl_x = (x_value - mean(x)) / sd(x),
+                              scl_x = (x_value - mu_x) / sd_x,
                               species = rep(unique(species))) %>% 
                       mutate(log_sigma = v_b[1] + v_b[bid] * scl_x, 
                              y = (exp(log_sigma) * sqrt(2)) / sqrt(pi),
                              focus = v)
+                    
+                    ## safer to specify what is a return object
+                    return(cout)
                   }
   
 }
 
-
 df_fig <- df_y %>% 
-  left_join(df_output, by = c("species", "focus" = "var")) %>% 
+  left_join(df_output,
+            by = c("species",
+                   "focus" = "var")) %>% 
   rowwise() %>% 
   mutate(sig = ifelse(between(0, lower95, upper95), 
-                        "TRUE", "FALSE"))
+                      "no",
+                      "yes")) %>% 
+  ungroup()
 
-fig_size <- df_combined %>%
-  drop_na(section1) %>% # figure only includes recap
-  ggplot(aes(x = length0,
-             y = abs_move / intv,
-             color = species)) +
-  geom_point(alpha = 0.5) +
-  geom_line(data = df_fig %>% 
-            filter(focus == "length0"),
-            aes(x = x_value,
-                y = y,
-                linetype = ifelse(sig == "TRUE", "solid", "dashed"))) +
-  facet_wrap2(~ species,
-              scales = "free",
-              strip = strip1,
-              labeller = labeller(species = species.labs)) +
-  scale_color_manual(values=c("darkcyan", "maroon", "mediumpurple1", "steelblue3"),
-                     name="Species") +
-  labs(x= "Length at Capture (mm)", y= "Absolute Movement (m/day)") +
-  theme(legend.position = "none",
-        #text = element_text(size = 20),
-        strip.text = element_text(color = 'white'))
-fig_size
-
+(fig_size <- df_combined %>%
+    drop_na(section1) %>% # figure only includes recap
+    ggplot(aes(x = log_length,
+               y = abs_move / intv,
+               color = species)) +
+    geom_point(alpha = 0.5) +
+    geom_line(data = df_fig %>% 
+                filter(focus == "log_length"),
+              aes(x = x_value,
+                  y = y,
+                  linetype = sig)) +
+    scale_linetype_manual(values = c("yes" = "solid",
+                                     "no" = "dashed")) +
+    facet_wrap2(~ species,
+                scales = "free",
+                strip = strip1,
+                labeller = labeller(species = species.labs)) +
+    scale_color_manual(values=c("darkcyan", "maroon", "mediumpurple1", "steelblue3"),
+                       name="Species") +
+    labs(x= "Length at Capture (mm)", y= "Absolute Movement (m/day)") +
+    theme(legend.position = "none",
+          #text = element_text(size = 20),
+          strip.text = element_text(color = 'white')))
 
 # Effect of Density -------------------------------------------------------
 
-fig_den <- df_combined %>% 
-  select(species, intv, abs_move, adj_density_bluehead_chub, adj_density_creek_chub, 
-         adj_density_green_sunfish, adj_density_redbreast_sunfish) %>% 
-  pivot_longer(cols = starts_with("adj_"),
-               names_to = "opponent", 
-               values_to = "density") %>% 
-  drop_na(abs_move) %>% 
-  ggplot(aes(x = density,
-             y = abs_move / intv, 
-             color = species)) +
-  geom_point(alpha = 0.5) + 
-  geom_line(data = df_fig %>% 
-              filter(str_detect(focus, "adj_density")) %>% 
-              rename(opponent = "focus"),
-            aes(x = x_value,
-                y = y,
-                color = species,
-                linetype = ifelse(sig == "TRUE", "solid", "dashed"))) +
-  facet_grid(rows = vars(species),
-             cols = vars(opponent),
-             scales = "free",
-             switch = "x",  # use switch = "y" to swap strip to the left side
-             labeller = labeller(species = species.labs, opponent = opp.labs)) +
-  scale_color_manual(values=c("darkcyan", "maroon", "mediumpurple1", "steelblue3"), 
-                     name = "species") +
-  labs(x= "Density (n/m^2)", y= "Absolute Movement (m/day)") +
-  ggtitle("Opponent")+
-  theme(legend.position = "none",
-        text = element_text(size = 15),
-        plot.title = element_text(hjust = 0.5, size = 20),
-        strip.background = element_rect(color = "black"),
-        strip.text = element_text(color = 'white'),
-        strip.placement = "outside")
-fig_den
-
+(fig_den <- df_combined %>% 
+   select(species,
+          intv,
+          abs_move,
+          adj_density_bluehead_chub,
+          adj_density_creek_chub, 
+          adj_density_green_sunfish,
+          adj_density_redbreast_sunfish) %>% 
+   pivot_longer(cols = starts_with("adj_"),
+                names_to = "opponent", 
+                values_to = "density") %>% 
+   drop_na(abs_move) %>% 
+   ggplot(aes(x = density,
+              y = abs_move / intv, 
+              color = species)) +
+   geom_point(alpha = 0.5) + 
+   geom_line(data = df_fig %>% 
+               filter(str_detect(focus, "adj_density")) %>% 
+               rename(opponent = "focus"),
+             aes(x = x_value,
+                 y = y,
+                 color = species,
+                 linetype = sig))  +
+   scale_linetype_manual(values = c("yes" = "solid",
+                                    "no" = "dashed")) +
+   facet_grid(rows = vars(species),
+              cols = vars(opponent),
+              scales = "free",
+              switch = "x",  # use switch = "y" to swap strip to the left side
+              labeller = labeller(species = species.labs, opponent = opp.labs)) +
+   scale_color_manual(values=c("darkcyan", "maroon", "mediumpurple1", "steelblue3"), 
+                      name = "species") +
+   labs(x= expression("Density (n /"~m^2*")"),
+        y= "Absolute Movement (m / day)") +
+   theme(legend.position = "none",
+         text = element_text(size = 15),
+         plot.title = element_text(hjust = 0.5, size = 20),
+         strip.background = element_rect(color = "black"),
+         strip.text = element_text(color = 'white'),
+         strip.placement = "outside"))
 
 fig_density <- ggplot_gtable(ggplot_build(fig_den))
 strip_both <- which(grepl('strip-', fig_density$layout$name))
