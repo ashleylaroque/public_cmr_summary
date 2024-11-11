@@ -174,14 +174,14 @@ gghistogram(df_combined, x= "abs_move", fill = "dodgerblue",
 
 dat_fig <- df_output %>% 
   filter(str_detect(para, "b")) %>% 
-  mutate(para = case_when(para == 'b[1]' ~ 'Intercept',
-                          para == 'b[2]' ~ 'Length',
-                          para == 'b[3]' ~ 'UCB Area',
-                          para == 'b[4]' ~ 'Mean Temperature',
-                          para == 'b[5]' ~ 'Density Creek Chub',
-                          para == 'b[6]' ~ 'Density Bluehead Chub',
-                          para == 'b[7]' ~ 'Density Green Sunfish',
-                          para == 'b[8]' ~ 'Density Redbreast Sunfish')) %>% 
+  mutate(para = case_when(var == '(Intercept)' ~ 'Intercept',
+                          var == 'log_length' ~ 'log Length',
+                          var == 'area_ucb' ~ 'UCB Area',
+                          var == 'mean_temp' ~ 'Mean Temperature',
+                          var == 'adj_density_creek_chub' ~ 'Density Creek Chub',
+                          var == 'adj_density_bluehead_chub' ~ 'Density Bluehead Chub',
+                          var == 'adj_density_green_sunfish' ~ 'Density Green Sunfish',
+                          var == 'adj_density_redbreast_sunfish' ~ 'Density Redbreast Sunfish')) %>% 
   mutate(para = factor(para, levels = rev(unique(para))))
 
 # estimates all together colored by species
@@ -206,7 +206,8 @@ fig_est <- dat_fig %>%
   geom_vline(xintercept = 0,
              lty = 2,
              col = "gray") +
-  ylab(NULL) +
+  labs(y = NULL,
+       x = "Estimate") +
   theme(legend.position = "none") +
   facet_wrap( ~ species, nrow = 2, ncol = 2, 
               labeller = labeller(species = species.labs))
