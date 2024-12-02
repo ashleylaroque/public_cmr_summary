@@ -7,7 +7,7 @@ model {
     b[k] ~ dnorm(0, pow(1, -2))
   }
   
-  p ~ dnorm(0, 1)T(0, 1)
+  p ~ dnorm(0.5, 0.5)T(0, 1)
   
   for (i in 1:Nsample) {
     ## observation model for recaptured or not
