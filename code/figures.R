@@ -35,6 +35,9 @@ df_combined <- df_combined %>%
                         "green_sunfish",
                         "redbreast_sunfish"))
 
+length(unique(df_combined$tag_id))
+sum(!is.na(df_combined$length1))
+
 # separate target species for use in loops
 usp <- c("bluehead_chub",
          "creek_chub",
@@ -42,11 +45,23 @@ usp <- c("bluehead_chub",
          "redbreast_sunfish") %>%
   sort()
 
-# calculate mean size of each species 
-df_size <- df_combined %>% 
+# calculate mean size of each tagged species 
+df_size_avg <- df_combined %>% 
   group_by(species) %>% 
   summarize(mu = mean(length0),
             sigma = sd(length0))
+
+
+df_den_avg <- df_combined %>% 
+    select(adj_density_bluehead_chub, adj_density_creek_chub,
+           adj_density_green_sunfish, adj_density_redbreast_sunfish) %>% 
+    pivot_longer(cols = starts_with("adj_"),
+                 names_to = "opponent", 
+                 values_to = "density") %>% 
+    group_by(opponent) %>% 
+    summarize(mu = mean(density),
+              sigma = sd(density))
+
 
 # Plot Theme --------------------------------------------------------------
 
@@ -110,7 +125,7 @@ df_n %>%
   geom_col() +
   theme(axis.text.x = element_text(angle = 45, vjust = .5))
 
-# visualize mean size
+t# visualize mean size
 ggplot(df_combined, aes(species, length0)) +
   geom_boxplot() 
 
@@ -153,7 +168,7 @@ fish_order <- c('bluehead_chub','creek_chub','striped_jumprock',
                 'green_sunfish','redbreast_sunfish', 'bluegill')
 
 # visualize movement across all occasions
-all_movement <- gghistogram(df_combined, x= "abs_move", fill = "dodgerblue",
+all_movement <- gghistogram(df_combined, x= "abs_move", fill = "#20A387FF",
                             xlab = "Distance (m)", ylab = "Frequency", binwidth = 10) +
   #geom_vline(xintercept = 0, linetype="dashed", color = "red", size=0.9) +
   facet_wrap2(species ~ ., 
@@ -164,7 +179,7 @@ all_movement
 
 # movement between seasons
 season_labs <- c("0" = "Winter", "1" = "Summer")
-gghistogram(df_combined, x= "abs_move", fill = "dodgerblue",
+gghistogram(df_combined, x= "abs_move", fill = "#20A387FF",
             xlab = "Distance (m)", ylab = "Frequency", binwidth = 10) +
   facet_wrap2(season ~ ., 
               scales = "free",
@@ -182,11 +197,15 @@ dat_fig <- df_output %>%
                           var == 'adj_density_bluehead_chub' ~ 'Density Bluehead Chub',
                           var == 'adj_density_green_sunfish' ~ 'Density Green Sunfish',
                           var == 'adj_density_redbreast_sunfish' ~ 'Density Redbreast Sunfish')) %>% 
-  mutate(para = factor(para, levels = rev(unique(para))))
+  mutate(para = factor(para, levels = rev(unique(para)))) %>% 
+  rowwise() %>% 
+  mutate(sig = ifelse(between(0, lower95, upper95), 
+                      "no",
+                      "yes")) 
 
 # estimates all together colored by species
 dat_fig %>%
-  ggplot(aes(x = median, y = para, color = species)) +
+  ggplot(aes(x = median, y = para, color = para)) +
   geom_errorbar(aes(xmin = lower95, xmax = upper95),
                 width = 0,
                 position = pd) +
@@ -197,15 +216,17 @@ dat_fig %>%
   ylab(NULL)
 
 # estimates faceted by species 
+
 fig_est <- dat_fig %>% 
-  ggplot(aes(x = median, y = para, color = para)) +
+  ggplot(aes(x = median, y = para, color = factor(sig))) +
   geom_errorbar(aes(xmin = lower95, xmax = upper95),
                 width = 0,
                 position = pd) +
   geom_point(position = pd) +
   geom_vline(xintercept = 0,
-             lty = 2,
+             lty = "solid",
              col = "gray") +
+  scale_color_manual(values = c("gray", "#20A387FF")) + 
   labs(y = NULL,
        x = "Estimate") +
   theme(legend.position = "none") +
