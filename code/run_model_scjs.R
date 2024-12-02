@@ -153,7 +153,7 @@ list_est <- foreach(x = usp) %do% {
   # mcmc setup --------------------------------------------------------------
   
   ## model file ####
-  mcjs <- runjags::read.jagsfile("code/model_cjs_move.R")
+  mcjs <- runjags::read.jagsfile("code/model_scjs.R")
   
   ## mcmc setup ####
   n_ad <- 1000
