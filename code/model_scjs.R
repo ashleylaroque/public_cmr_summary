@@ -60,18 +60,23 @@ model {
   } #i
   
   # movement model ----------------------------------------------------------
-  ## prior
-  tau_x ~ dscaled.gamma(500, 6)
-  sd_x <- sqrt(1 / tau_x)
+  ## prior for log-trans daily movement sd
+  log_sd0 ~ dnorm(0, 0.01)
+  sd0 <- exp(log_sd0)
   
   ## likelihood
   ## - Xm: location matrix
   ## - xi: stay state, 1 = stay, 0 = move out from the study section
   for (i in 1:Nind) {
     for (t in (Fc[i] + 1):Nocc) {
-      Xm[i, t] ~ dnorm(Xm[i, t - 1], tau_x) # gross movement
-      xi[i, t] <- step(s[i, t] - 1.5) # true emigration
-      s[i, t] <- step(L - Xm[i, t]) + step(Xm[i, t]) # component to measure emigration (whether they have left up vs downstream)
+      Xm[i, t] ~ dnorm(Xm[i, t - 1], tau_x[i, t - 1]) # gross movement
+      tau_x[i, t - 1] <- pow(sd_x[i, t - 1], -2)
+      log(sd_x[i, t - 1]) <- log_sd0 + log(Intv_m[i, t - 1])
+      
+      # xi, indicator for true emigration
+      # component to measure emigration (whether they have left up vs downstream)
+      xi[i, t] <- step(s[i, t] - 1.5) 
+      s[i, t] <- step(L - Xm[i, t]) + step(Xm[i, t]) 
     }#t
   }#i
   
