@@ -1,0 +1,35 @@
+\documentclass[border=1mm]{standalone}
+\usepackage{amssymb, amsmath}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage[utf8]{inputenc}
+\usepackage{makecell}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{xunicode}
+\usepackage{xcolor}
+\begin{document}
+\begin{table}[!h]
+\centering
+\begin{tabular}[t]{lrrrr}
+\toprule
+Species & \makecell[c]{Capture\\(unique)} & \makecell[c]{Recapture\\(unique)} & \makecell[c]{Capture\\(total replicate)} & \makecell[c]{Recapture\\(total replicate)}\\
+\midrule
+bluehead_chub & 479 & 73 & 615 & 82\\
+creek_chub & 1191 & 111 & 1391 & 145\\
+green_sunfish & 503 & 56 & 612 & 60\\
+redbreast_sunfish & 257 & 33 & 317 & 37\\
+\bottomrule
+\end{tabular}
+\end{table}
+\end{document}

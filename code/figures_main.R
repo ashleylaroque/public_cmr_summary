@@ -9,19 +9,7 @@ source(here::here("code/library.R"))
 source(here::here("code/format_cmr.R"))
 source(here::here("code/format_habitat.R"))
 
-df_combined <- readRDS("data_formatted/data_combined.rds")  # comes from 'run_model_move'
-df_output <- readRDS("data_formatted/output_move.rds") %>% 
-  bind_rows() %>% 
-  rename(species = "y",
-         median = "50%" ,
-         upper95 = "97.5%" ,
-         lower95 = "2.5%") %>% 
-  drop_na(var) # comes from 'run_model_move'
-
-# Set up  -----------------------------------------------------------------
-
-# format data for figures
-df_combined <- df_combined %>% 
+df_combined <- readRDS("data_formatted/data_combined.rds") %>% 
   mutate(move = (section1 - section0) * 10, 
          abs_move = abs(move), # generate absolute movement for figures
          month = format(datetime0, "%m") %>% 
@@ -33,10 +21,17 @@ df_combined <- df_combined %>%
   filter(species %in% c("bluehead_chub",
                         "creek_chub",
                         "green_sunfish",
-                        "redbreast_sunfish"))
+                        "redbreast_sunfish"))# comes from 'run_model_move'
 
-length(unique(df_combined$tag_id))
-sum(!is.na(df_combined$length1))
+df_output <- readRDS("data_formatted/output_move.rds") %>% 
+  bind_rows() %>% 
+  rename(species = "y",
+         median = "50%" ,
+         upper95 = "97.5%" ,
+         lower95 = "2.5%") %>% 
+  drop_na(var) # comes from 'run_model_move'
+
+# Plot Theme --------------------------------------------------------------
 
 # separate target species for use in loops
 usp <- c("bluehead_chub",
@@ -44,26 +39,6 @@ usp <- c("bluehead_chub",
          "green_sunfish",
          "redbreast_sunfish") %>%
   sort()
-
-# calculate mean size of each tagged species 
-df_size_avg <- df_combined %>% 
-  group_by(species) %>% 
-  summarize(mu = mean(length0),
-            sigma = sd(length0))
-
-
-df_den_avg <- df_combined %>% 
-    select(adj_density_bluehead_chub, adj_density_creek_chub,
-           adj_density_green_sunfish, adj_density_redbreast_sunfish) %>% 
-    pivot_longer(cols = starts_with("adj_"),
-                 names_to = "opponent", 
-                 values_to = "density") %>% 
-    group_by(opponent) %>% 
-    summarize(mu = mean(density),
-              sigma = sd(density))
-
-
-# Plot Theme --------------------------------------------------------------
 
 ## plot theme
 plt_theme <- theme_bw() + theme(
@@ -97,101 +72,13 @@ opp.labs <- c("Density Bluehead Chub", "Density Creek Chub", "Density Green Sunf
 names(opp.labs) <- c("adj_density_bluehead_chub", "adj_density_creek_chub" ,"adj_density_green_sunfish", "adj_density_redbreast_sunfish")
 strip1 <- strip_themed(background_x = elem_list_rect(fill = c("darkcyan", "maroon", "mediumpurple1", "steelblue3")))
 
-# General Plots -----------------------------------------------------------
-# visualize section recapture vs section cap relationship
-ggplot(df_combined) +
-  aes(x = section0,
-      y = section1) +
-  geom_point() +
-  geom_smooth(method = "lm")
-
-# visualize recap per target species
-ftable(df_cmr$recap)
-
-df_cmr %>% 
-  mutate(Recap = ifelse(recap == "n", "No", "Yes")) %>% 
-  ggplot(aes(x= recap, fill = Recap)) +
-  scale_fill_manual(values = alpha(c("gold", "darkorange"))) +
-  geom_bar() +
-  theme_minimal() +
-  facet_wrap(~species)
-
-# visualize abundance of all captured species
-df_n %>%
-  group_by(species) %>%
-  tally(n) %>%
-  ungroup() %>%
-  ggplot(aes(reorder(species, -n), n)) +
-  geom_col() +
-  theme(axis.text.x = element_text(angle = 45, vjust = .5))
-
-t# visualize mean size
-ggplot(df_combined, aes(species, length0)) +
-  geom_boxplot() 
-
-# Correlations of fish abundance with habitat -----------------------------------------------------------------
-
-## sunfish
-chart.Correlation(df_combined[, c("adj_density_green_sunfish", "adj_density_redbreast_sunfish",
-                                  "depth_mean", "velocity_mean", "substrate_mean", 
-                                  "area", "area_ucb")], method="spearman", histogram=TRUE, cex = 10) 
-## chubs
-chart.Correlation(df_combined[, c("adj_density_creek_chub", "adj_density_bluehead_chub",
-                                  "depth_mean", "velocity_mean", "substrate_mean", 
-                                  "area", "area_ucb")], method="spearman", histogram=TRUE, cex = 10) 
-
-
-# Histograms of movement frequency ----------------------------------------
-
-# Histogram of Cyprinid and Catastomid Movement per occasion at recap
-gghistogram(df_combined[df_combined$species %in% c('bluehead_chub','creek_chub', 'striped_jumprock'), ], 
-            x = "move", fill = "lightgrey",
-            xlab = "Distance (m)", ylab = "Frequency", binwidth = 10, 
-            facet.by = c("occasion1","species")) +
-  geom_vline(xintercept = 0, linetype="dashed", color = "red", size=0.9) 
-
-
-# Histogram of Centrarchids Movement
-gghistogram(df_combined[df_combined$species %in% c('bluegill','green_sunfish','redbreast_sunfish'), ], 
-            x = "move", fill = "lightgrey",
-            xlab = "Distance (m)", ylab = "Frequency", binwidth = 10, 
-            facet.by = c("occasion1","species")) +
-  geom_vline(xintercept = 0, linetype="dashed", color = "red", size=0.9)
-
-
-# Histogram of general movement over all occasions
-
-# generate labels and order of plots 
-fish_labs <- c(bluehead_chub = "Bluehead Chub", creek_chub = "Creek Chub", striped_jumprock = "Striped Jumprock",
-               redbreast_sunfish = "Redbreast Sunfish", green_sunfish = "Green Sunfish", bluegill = "Bluegill")
-fish_order <- c('bluehead_chub','creek_chub','striped_jumprock',
-                'green_sunfish','redbreast_sunfish', 'bluegill')
-
-# visualize movement across all occasions
-all_movement <- gghistogram(df_combined, x= "abs_move", fill = "#20A387FF",
-                            xlab = "Distance (m)", ylab = "Frequency", binwidth = 10) +
-  #geom_vline(xintercept = 0, linetype="dashed", color = "red", size=0.9) +
-  facet_wrap2(species ~ ., 
-              scales = "free",
-              labeller = as_labeller(fish_labs))+
-  theme(axis.text.x = element_text(angle = 45, vjust = .5)) 
-all_movement
-
-# movement between seasons
-season_labs <- c("0" = "Winter", "1" = "Summer")
-gghistogram(df_combined, x= "abs_move", fill = "#20A387FF",
-            xlab = "Distance (m)", ylab = "Frequency", binwidth = 10) +
-  facet_wrap2(season ~ ., 
-              scales = "free",
-              labeller = as_labeller(season_labs))
-
 # Model estimate ----------------------------------------------------------
 
 dat_fig <- df_output %>% 
   filter(str_detect(para, "b")) %>% 
   mutate(para = case_when(var == '(Intercept)' ~ 'Intercept',
                           var == 'log_length' ~ 'log Length',
-                          var == 'area_ucb' ~ 'UCB Area',
+                          var == 'area_ucb' ~ 'Habitat Refuge Area',
                           var == 'mean_temp' ~ 'Mean Temperature',
                           var == 'adj_density_creek_chub' ~ 'Density Creek Chub',
                           var == 'adj_density_bluehead_chub' ~ 'Density Bluehead Chub',
@@ -203,17 +90,8 @@ dat_fig <- df_output %>%
                       "no",
                       "yes")) 
 
-# estimates all together colored by species
-dat_fig %>%
-  ggplot(aes(x = median, y = para, color = para)) +
-  geom_errorbar(aes(xmin = lower95, xmax = upper95),
-                width = 0,
-                position = pd) +
-  geom_point(position = pd) +
-  geom_vline(xintercept = 0,
-             lty = 2,
-             col = "gray") +
-  ylab(NULL)
+#saveRDS(dat_fig, file = "data_formatted/data_est.rds")
+
 
 # estimates faceted by species 
 

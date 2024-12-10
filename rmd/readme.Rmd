@@ -15,21 +15,85 @@ knitr::opts_chunk$set(echo = FALSE,
 ```
 
 
-# Header 1
+# Article Information
 
-normal text
+**Title**: Body size and local density explain movement patterns in stream fish
 
-## Header 2
+**Authors**: LaRoque A, Kim S, Terui A
 
-normal text
+**Journal**: Proceedings of the Royal Society B
 
-### Header 3
+# Analysis
 
-normal text
+## Movement Analysis
+
+**Dispersal-Observation Model**: Script `run_model_move.R` runs the Dispersal-Observation model. Only consecutive recaptures were used. Model source codes are `model_move.R`.
+
+Data are formatted in and sourced from:
+
+For source codes, see:
+- 'data_formatted/data_move.rds' (from format_cmr.R; data frame with consecutive fish movement related data)
+- 'data_formatted/data_water_hobo.rds' (from format_water_level.R; data frame with water temperature)
+- 'data_formatted/data_density.rds' (from format_cmr.R; generates all density of all fish species per section area)
+- 'data_formatted/data_habitat.rds' (from format_habitat.R; data frame with all habitat data)
+- 'data_formatted/data_detection.rds' (from run_model_scjs.R; generated to account for seasonal detectability)
+- 'data_formatted/data_season.rds' (from run_model_scjs.R; generated to include seasonal differences)
+
+For visualization, see:
+- 'figures_main.R'
+- 'figures_supp.R'
+
+## Detection Analysis
+
+**Detection Model**: Script `run_model_scjs.R` runs the modified CJS model accounting for seasonal variation in detection probability. Model source codes are `model_scjs.R`.
+
+Data are formatted in and sourced from:
+- 'data_formatted/data_cmr.rds' (from format_cmr.R; base data frame with all fish related data (tagged and non-tagged fish))
+- 'data_formatted/data_move.rds' (from format_cmr.R; data frame with consecutive fish movement related data)
+
+## Formatting Habitat Data ('format_habitat.R')
+Data was collected by section in which each section was broken into three transects. Measurements were collected along three evenly spaced points along each transect. These were then averaged to generate one value for each section.
+
+- occasion: range from 1-15
+- section: range from 1-43
+- width: wet width measured in meters
+- section length: wet length measured in meters
+- depth_mean: measured in millimeters
+- velocity_mean: measured in meters per second
+- substrate_mean: measured in millimeters
+- area: surface area of section based on width and total section length
+- area_pool: surface area of pool based on width and length of that 
+- area_riffle: surface area of riffle based on width and length
+- area_run: surface area of run based on width and length
+- area_ucb: surface area of undercut bank based on width and length (renamed as habitat refuge area (HRA) in manuscript)
+
+## Formatting Capture-Recapture Data ('format_cmr.R')
+Fish were collected via single-pass backpack electroshocking.
+
+- species: tagged species ID
+- tag_id: individual tag ID
+- section0: section of capture
+- section1: section of recapture (NA if not recaptured)
+- occasion0: occasion of capture
+- occasion1: occasion of recapture (NA if not recaptured)
+- length0: total body length (mm) at capture
+- length1: total body length (mm) at recapture (NA if not recaptured)
+- datetime0: actual date at capture (year, month, day, hour, minute, second)
+- datetime1: actual date at recapture (NA if not recaptured) 
+- weight0: total wet weight (g) at capture
+- weight1: total wet weight (g) at recapture (NA if not recaptured)
+
+## Formatting Density Data
+Density of each fish species was calculated as the number of individuals per section area for each section across each occasion
+
+
+
+For source codes, see:
 
 ```{r setup}
 
 source(here::here("code/library.R"))
+source(here::here("code/function.R"))
 sessionInfo()
 
 ```

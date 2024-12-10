@@ -8,8 +8,9 @@ pacman::p_load(tidyverse,
                gtable,
                googledrive,
                MCMCvis,
-               scales)
+               scales,
+               kableExtra,
+               ggfortify)
 
 
-# command + shift + C to comment out multiple lines 
 # sessionInfo() to extract version etc

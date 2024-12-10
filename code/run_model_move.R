@@ -14,8 +14,8 @@ source("code/function.R")
 df_move0 <- readRDS("data_formatted/data_move.rds") %>% 
   drop_na(section0)
 
-df_zeta <- readRDS("data_formatted/data_detection.rds") # comes from 'run_model_cjs_move'
-df_season <- readRDS("data_formatted/data_season.rds") # comes from 'run_model_cjs_move'
+df_zeta <- readRDS("data_formatted/data_detection.rds") # comes from 'run_model_scjs'
+df_season <- readRDS("data_formatted/data_season.rds") # comes from 'run_model_scjs'
 df_hobo <- readRDS("data_formatted/data_water_hobo.rds")   # comes from 'format_water_level'
 
 
@@ -67,7 +67,7 @@ usp <- c("green_sunfish",
 
 ## mcmc setup ####
 n_ad <- 1500
-n_iter <- 25000
+n_iter <- 30000
 n_thin <- max(3, ceiling(n_iter / 1000))
 n_burn <- ceiling(max(10, n_iter / 2))
 n_sample <- ceiling(n_iter / n_thin)
@@ -91,6 +91,7 @@ list_est <- foreach(x = usp) %do% {
     dplyr::select(log_length, # log-trans total length of individual
                   area_ucb,   # area of undercut bank coverage
                   mean_temp,  # temp
+                  velocity_mean,   # water velocity
                   adj_density_bluehead_chub, # seasonally adjusted density
                   adj_density_creek_chub, 
                   adj_density_green_sunfish,
@@ -98,6 +99,7 @@ list_est <- foreach(x = usp) %do% {
     mutate(across(.cols = c(log_length,
                             area_ucb,
                             mean_temp, 
+                            velocity_mean,
                             starts_with("adj_density")),
                   .fns = function(x) c(scale(x)))) %>% 
     model.matrix(~., data = .)
