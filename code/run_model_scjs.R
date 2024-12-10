@@ -143,7 +143,7 @@ list_est <- foreach(x = usp) %do% {
   d_jags <- c(list_recap, list_intv, list_move)
   
   para <- c("zeta",
-            "sd_x",
+            "sd0",
             "mean.p",
             "mu.p",
             "mu.phi",
