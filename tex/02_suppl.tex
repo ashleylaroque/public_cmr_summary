@@ -57,7 +57,7 @@
 
 Our capture-recapture data was collected seasonally and fish may be subject to different detection probabilities by season.
 As such, accounting for detection probabilities is essential to obtain reliable estimates of fish density.
-We utilized a spatial Cormack-Jolly-Seber (CJS) model \citep{} to account for seasonal detection probabilities. 
+We utilized a spatial Cormack-Jolly-Seber (CJS) model \citep{schaubEstimatingTrueInstead2014} to account for seasonal detection probabilities. 
 This model allowed us to estimate seasonal detection probabilities while accounting for permanent emigration and survival.
 
 \textit{Observation process} -- 
@@ -116,7 +116,7 @@ As in the main text, we assumed $X_{j,t+1}$ as a random draw from a normal distr
     \label{eq:si-normal}
 \end{align}
 
-where $\sigma_0$ is the standard deviation describing the dairy distance moved between occasion $t$ and $t+1$ and $\eta_{j,t}$ is the interval (unit: day) between the occasions for individual $j$.
+where $\sigma_0$ is the standard deviation describing the daily distance moved between occasion $t$ and $t+1$ and $\eta_{j,t}$ is the interval (unit: day) between the occasions for individual $j$.
 Unlike the main movement model, we were unable to include predictors for $\sigma_{j,t}$ since predictor values were unavailable when individual $j$ was not recaptured.
 
 The latent variable $z_{j,t}$ was determined by the observed (if recaptured) or predicted location (if not recaptured) of unique individual $j$ as: 
@@ -146,7 +146,7 @@ When $X_{j, t+1}$ was unobserved (i.e., not recaptured), a predicted value was d
 
 % where $Int_i,t$ is the time interval between capture and recapture in accordance with log-transformed survival per day $\phi.day_{i, t}$.
 
-The model was fitted to the data for each species separately using JAGS \citep{JAGSJustAnother}. Markov chain Monte Carlo (MCMC) simulations were run for 20,000 iterations with a 1,000 burn-in period and we retained 1,000 samples per chain by thinning every 40 steps to calculate posterior probabilities. Model convergence was checked by ensuring that the potential scale reduction factor, referred to as R-hat, was less than 1.1 for all parameters. All statistical analyses were conducted in R version 4.4.0 \citep{CoreTeam2020}. 
+The model was fitted to the data for each species separately using JAGS \citep{JAGSJustAnother}. Uninformative priors (Normal(0,1)) were used for probabilities of survival $\phi$ and recapture $\Y$. The uninformative prior (Normal(0,0.01)) was used for the seasonal effect probability $\alpha$ Markov chain Monte Carlo (MCMC) simulations were run for 20,000 iterations with a 1,000 burn-in period and we retained 1,000 samples per chain by thinning every 40 steps to calculate posterior probabilities. Model convergence was checked by ensuring that the potential scale reduction factor, referred to as R-hat, was less than 1.1 for all parameters. All statistical analyses were conducted in R version 4.4.0 \citep{CoreTeam2020}. 
 
 
 
