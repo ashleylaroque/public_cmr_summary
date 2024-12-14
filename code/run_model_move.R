@@ -91,8 +91,6 @@ list_est <- foreach(x = usp) %do% {
     dplyr::select(log_length, # log-trans total length of individual
                   area_ucb,   # area of undercut bank coverage
                   mean_temp,  # temp
-                  depth_mean, 
-                  substrate_mean, 
                   velocity_mean,
                   adj_density_bluehead_chub, # seasonally adjusted density
                   adj_density_creek_chub, 
@@ -101,9 +99,7 @@ list_est <- foreach(x = usp) %do% {
     mutate(across(.cols = c(log_length,
                             area_ucb,
                             mean_temp, 
-                            depth_mean,
                             velocity_mean,
-                            substrate_mean,
                             starts_with("adj_density")),
                   .fns = function(x) c(scale(x)))) %>% 
     model.matrix(~., data = .)

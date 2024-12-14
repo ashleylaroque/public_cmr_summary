@@ -78,8 +78,9 @@ dat_fig <- df_output %>%
   filter(str_detect(para, "b")) %>% 
   mutate(para = case_when(var == '(Intercept)' ~ 'Intercept',
                           var == 'log_length' ~ 'log Length',
-                          var == 'area_ucb' ~ 'Habitat Refuge Area',
                           var == 'mean_temp' ~ 'Mean Temperature',
+                          var == 'velocity_mean' ~ "Mean Velocity",
+                          var == 'area_ucb' ~ 'Habitat Refuge Area',
                           var == 'adj_density_creek_chub' ~ 'Density Creek Chub',
                           var == 'adj_density_bluehead_chub' ~ 'Density Bluehead Chub',
                           var == 'adj_density_green_sunfish' ~ 'Density Green Sunfish',
@@ -104,7 +105,7 @@ fig_est <- dat_fig %>%
   geom_vline(xintercept = 0,
              lty = "solid",
              col = "gray") +
-  scale_color_manual(values = c("gray", "#20A387FF")) + 
+  scale_color_manual(values = c("gray", "steelblue3")) + 
   labs(y = NULL,
        x = "Estimate") +
   theme(legend.position = "none") +
