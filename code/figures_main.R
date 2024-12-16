@@ -79,7 +79,7 @@ dat_fig <- df_output %>%
   mutate(para = case_when(var == '(Intercept)' ~ 'Intercept',
                           var == 'log_length' ~ 'log Length',
                           var == 'mean_temp' ~ 'Mean Temperature',
-                          var == 'velocity_mean' ~ "Mean Velocity",
+                          var == 'velocity_mean' ~ "Velocity",
                           var == 'area_ucb' ~ 'Habitat Refuge Area',
                           var == 'adj_density_creek_chub' ~ 'Density Creek Chub',
                           var == 'adj_density_bluehead_chub' ~ 'Density Bluehead Chub',
