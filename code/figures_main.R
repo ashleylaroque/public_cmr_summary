@@ -96,7 +96,7 @@ dat_fig <- df_output %>%
 
 # estimates faceted by species 
 
-fig_est <- dat_fig %>% 
+(fig_est <- dat_fig %>% 
   ggplot(aes(x = median, y = para, color = factor(sig))) +
   geom_errorbar(aes(xmin = lower95, xmax = upper95),
                 width = 0,
@@ -110,8 +110,12 @@ fig_est <- dat_fig %>%
        x = "Estimate") +
   theme(legend.position = "none") +
   facet_wrap( ~ species, nrow = 2, ncol = 2, 
-              labeller = labeller(species = species.labs))
-fig_est
+              labeller = labeller(species = species.labs)))
+
+ggsave(fig_est,
+       filename = "output/fig_est.pdf",
+       height = 9,
+       width = 12)
 
 
 # Effect of Body Size ---------------------------------------------------
@@ -193,6 +197,11 @@ df_fig <- df_y %>%
           #text = element_text(size = 20),
           strip.text = element_text(color = 'white')))
 
+ggsave(fig_size,
+       filename = "output/fig_size.pdf",
+       height = 8,
+       width = 9)
+
 # Effect of Density -------------------------------------------------------
 
 (fig_den <- df_combined %>% 
@@ -247,5 +256,9 @@ for (i in strip_both) {
 }
 grid.draw(fig_density)
 
+ggsave(fig_density,
+       filename = "output/fig_density.pdf",
+       height = 10,
+       width = 12)
 
 
