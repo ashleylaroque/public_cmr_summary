@@ -25,7 +25,7 @@
 
 % citation setup
 \usepackage[euler]{textgreek}
-\usepackage[sort\&compress]{natbib}
+\usepackage[sort&compress]{natbib}
 \setcitestyle{square}
 \setcitestyle{comma}
 \bibliographystyle{pnas-new}
@@ -56,7 +56,7 @@
 
 \section{Abstract}
 
-Movement is a fundamental process in structuring communities, distributing species, and altering gene flow. Both extrinsic (e.g., density of species) and intrinsic factors (e.g., body size) influence movement patterns, ultimately driving the spatial organization of ecological communities. However, these extrinsic and intrinsic factors are often assessed in isolation, limiting our ability to understand how multiple factors combine to shape movement patterns in nature. In this study, we used a capture-mark-recapture framework using 12mm passive integrated transponder (PIT) tags to individually track movement, classified as the difference between locations on consecutive (re)captures, of four fishes in a small stream in North Carolina. Here, we evaluate whether total length and local density have an impact on movement rates using a dispersal-observation model, which accounts for detectability, survival, and emigration when estimating the effects of intrinsic and extrinsic factors. We found that larger individuals were more likely to move, which may be explained by their greater physical ability to balance the energetic cost of moving in tandem with heightened competitive ability during settlement. The effect of density on movement was mixed, such that both centrarchid species responded to creek chub (\textit{Semotilus atromaculatus}) positively, but conversely to the bluehead chub (\textit{Nocomis leptocephalus}). While the only cyprinid response to densities was that of the creek chub, with its movement inhibited only by high densities of redbreast sunfish (\textit{Lepomis auritus}). Collectively, our results suggest that intrinsic (body size) and extrinsic factors (density) act to dictate movement patterns, but their relative importance is species-specific. Further exploring the relationship behind drivers of movement by integrating behavioral and spatial ecology will provide greater insight into community and metacommunity dynamics. 
+Movement is a fundamental process in structuring communities, distributing species, and mediating gene flow. Both extrinsic (e.g., density of species) and intrinsic factors (e.g., body size) influence movement patterns, ultimately driving the spatial organization of ecological communities. However, these extrinsic and intrinsic factors are often assessed in isolation, limiting our ability to understand how multiple factors combine to shape movement patterns in nature. Here, we evaluate whether body size (intrinsic) and intra- and interspecific densities (extrinsic) have an impact on movement rates of four fish species (\textit{Nocomis leptocephalus} bluehead chub, \textit{Semotilus atromaculatus} creek chub, \textit{Lepomis cyanellus} green sunfish, \textit{Lepomis auritus} redbreast sunfish) in a small stream in North Carolina, the United States. We employed a capture-mark-recapture framework to individually track movement, classified as the difference between locations on consecutive (re)captures, to which we applied a dispersal-observation model that accounts for detectability, survival, and emigration when inferring movement processes. We found that larger individuals were more likely to move, which may be explained by their greater physical ability to balance the energetic cost of moving in tandem with heightened competitive ability during settlement. The effect of density on movement was mixed, such that both centrarchid species responded to creek chub positively, but conversely to the bluehead chub. The only cyprinid response to densities was that of the creek chub, with its movement inhibited only by high densities of redbreast sunfish. Collectively, our results suggest that intrinsic (body size) and extrinsic factors (density) act to dictate movement patterns, but their relative importance is species-specific. Further exploring the relationship behind drivers of movement by integrating behavioral and spatial ecology will provide greater insight into spatial community dynamics. 
 
 \section{Introduction}
 
@@ -110,15 +110,15 @@ We linked the standard deviation of  movement distance to predictors using a log
 
 where $\beta_0$ is the intercept and $\beta_k$ is the regression coefficient for the $k$-th predictor $x_{k,i}$. The log-transformed time interval between capture and recapture $\ln \eta_i$ [ln day] was included as an offset term to standardize the movement duration between observations.
 
-In our model, we included body size at capture as a proxy variable for the individual’s locomotive capacity, whereas the densities of bluehead chub, creek chub, green sunfish, and redbreast sunfish at capture sections were included to evaluate intra- and interspecific density-dependence in movement. These densities were corrected for imperfect detection of the study species (Supporting Information). We included mean water temperature (mean of each sampling interval), velocity, and HRA to control possible effects of movement seasonality and microhabitat structure. HRAs often provide microhabitats harboring a considerable number of individuals.  Other habitat variables, such as depth and substrate, were not included due to their correlative nature with velocity making it difficult to discern ecological interpretation from. 
+In our model, we included body size at capture as a proxy variable for the individual’s locomotive capacity, whereas the densities of bluehead chub, creek chub, green sunfish, and redbreast sunfish at capture sections were included to evaluate intra- and interspecific density-dependence in movement. These densities were corrected for imperfect detection of the study species (Supporting Information). We included mean water temperature (mean of each sampling interval), velocity, and HRA to control possible effects of movement seasonality and microhabitat structure. HRAs often provide microhabitats harboring a considerable number of individuals.  Other habitat variables, such as depth and substrate, were not included due to their correlative nature with velocity. 
 
 \textit{Observation process}. Our capture-recapture data is the imperfect representation of movement processes because fish are recaptured only when the following conditions are satisfied simultaneously: alive, stay, and detected in the study section. Our observation model accounts for this process by describing the recapture state $Y_i$ (1 if recaptured 0 otherwise) as random draws from a Bernoulli distribution:
 
 \begin{equation}
-    Y_i \sim \text{Bernoulli}(\phi_i z_i)
+    Y_i \sim \text{Bernoulli}(\phi z_i)
 \end{equation}
 
-where $\phi_i$ is the product of survival, detection, and tag-retention probabilities (hereafter, ``recapture'' probability) and $z_i$ is the binary latent variable indicating whether individual $i$ stayed in the study section at the recapture occasion.
+where $\phi$ is the product of survival, detection, and tag-retention probabilities (hereafter, ``recapture'' probability) and $z_i$ is the binary latent variable indicating whether individual $i$ stayed in the study section at the recapture occasion.
 The latent variable $z_i$ was determined by the observed (if recaptured) or predicted location (if not recaptured) of individual replicate $i$ as: 
 
 \begin{equation}
@@ -132,7 +132,7 @@ The latent variable $z_i$ was determined by the observed (if recaptured) or pred
 $L$ is the upstream terminal of the study reach ($L = 430$). When $X_{1,i}$ was unobserved (i.e., not recaptured), a predicted value was drawn from Equation \ref{eq:normal} through the Markov Chain Monte Carlo simulations (see below), thus accounting for the observation process when estimating the movement parameter $\sigma_i$.
 This coupling of observation and movement processes accounts for permanent emigration and yields less biased estimates of movement parameters \citep{teruiModelingDispersalUsing2020}.
 
-The model was fitted to the data for each species separately using JAGS \citep{JAGSJustAnother}. Uninformative priors (Normal(0,0.01), Normal(0,0.01), Normal(0,0.01)) were used for probabilities of intercept $\beta_0$, coefficient $\beta_0$, and predictors $x_{k,i}$. Markov chain Monte Carlo (MCMC) simulations were run for 30,000 iterations with a 1,000 burn-in period and we retained 1,000 samples per chain by thinning every 40 steps to calculate posterior probabilities. Model convergence was checked by ensuring that the potential scale reduction factor, referred to as R-hat, was less than 1.1 for all parameters. All statistical analyses were conducted in R version 4.4.0 \citep{CoreTeam2020}.
+The model was fitted to the data for each species separately using JAGS \citep{JAGSJustAnother}. Weakly informative priors were assigned to parameters: $\text{Normal}(0, 10^2)$ for intercept $\beta_0$ and coefficient $\beta_0$, and $\text{Trunc}(\text{Normal}(0.5, 1^2), 0, 1)$ for recapture probability $\phi$. Markov chain Monte Carlo (MCMC) simulations were run for 30,000 iterations with a 1,000 burn-in period and we retained 1,000 samples per chain by thinning every 40 steps to calculate posterior probabilities. Model convergence was checked by ensuring that the potential scale reduction factor, referred to as R-hat, was less than 1.1 for all parameters. All statistical analyses were conducted in R version 4.4.0 \citep{CoreTeam2020}.
 
 \section{Results}
 
@@ -158,7 +158,8 @@ Cyprinid species (creek chub and bluehead chub) responded vaguely to population 
     \caption{Response of density on movement distance. Each panel describes the absolute movement of a species (rows) in response to the density of a given species (column). Colors represent species. Diagonally, the response to intraspecific interactions are shown, while anything outside the diagonal is the response to interspecific interactions. Points represent actual values for each recaptured individual. Lines indicate the modeled movement estimate in response to density (significant = solid, insignificant = dashed).}
     \label{fig:fig_density}
 \end{figure}
-Both centrarchid species responded to undercut bank areas. Green sunfish movements increased as HRA increased, while redbreast sunfish movements declined. Neither cyprinid species was impacted by HRA. Temperature was only significant for bluehead chub by minimizing movements as temperature increased. Velocity had a negative effect on all four species, driving less movement as velocity increases. 
+
+Both centrarchid species responded to undercut bank areas. Green sunfish movements increased as HRA increased, while redbreast sunfish movements declined. Neither cyprinid species was impacted by HRA. Temperature was only significant for bluehead chub by minimizing movements as temperature increased. Velocity had a negative effect on all four species except for bluehead chub, driving less movement as velocity increases. 
 
 \section{Discussion}
 
