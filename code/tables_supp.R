@@ -116,8 +116,7 @@ df_p <- readRDS("data_formatted/output_cjs.rds") %>%
 print(xtable(df_p,
              caption = "Seasonal detection probabilities estimated by the spatial CJS model.",
              label = "tab:detection"),
-      tabular.environment = "tabularx", # use \begin{tabularx}
-      width = "\\textwidth", # scale table with \textwidth
+      tabular.environment = "tabular", # use \begin{tabular}
       sanitize.text.function = function(x) x, # for math mode
       include.rownames = FALSE,
       caption.placement = "top",
