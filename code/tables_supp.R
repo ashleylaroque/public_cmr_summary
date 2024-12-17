@@ -114,7 +114,7 @@ df_p <- readRDS("data_formatted/output_cjs.rds") %>%
 
 ## export
 print(xtable(df_p,
-             caption = "Seasonal detection probabilities estimated by the spatial CJS model.",
+             caption = "Seasonal detection probabilities estimated using the spatial Cormack-Jolly-Seber (CJS) model, presented as median estimates with corresponding 95% credible intervals.",
              label = "tab:detection"),
       tabular.environment = "tabular", # use \begin{tabular}
       sanitize.text.function = function(x) x, # for math mode
