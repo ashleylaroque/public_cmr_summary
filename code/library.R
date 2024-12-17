@@ -10,7 +10,8 @@ pacman::p_load(tidyverse,
                MCMCvis,
                scales,
                kableExtra,
-               ggfortify)
+               ggfortify,
+               xtable)
 
 
 # sessionInfo() to extract version etc

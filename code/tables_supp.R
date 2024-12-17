@@ -89,3 +89,38 @@ kableExtra::save_kable(tab_est, file = "output/table_estimates.pdf")
 # Table of Habitat Variables -----------------------------------------------
 
 tab_hab <- df_h_sec 
+
+
+# Table for Detection Probabilities ---------------------------------------
+
+options(xtable.comment = FALSE)
+
+df_p <- readRDS("data_formatted/output_cjs.rds") %>% 
+  bind_rows() %>% 
+  filter(str_detect(para, "zeta")) %>% 
+  mutate(species = str_to_sentence(species) %>% 
+           str_replace("_", " "),
+         season = ifelse(para == "zeta[1]", "Winter", "Summer"),
+         estimate = paste0(sprintf("%.2f", `50%`),
+                           " [",
+                           sprintf("%.2f", `2.5%`),
+                           " - ",
+                           sprintf("%.2f", `97.5%`),
+                           "]")) %>% 
+  select(Species = species,
+         Season = season,
+         Estimate = estimate) %>% 
+  mutate(Species = ifelse(duplicated(Species), NA, Species))
+
+## export
+print(xtable(df_p,
+             caption = "Seasonal detection probabilities estimated by the spatial CJS model.",
+             label = "tab:detection"),
+      tabular.environment = "tabularx", # use \begin{tabularx}
+      width = "\\textwidth", # scale table with \textwidth
+      sanitize.text.function = function(x) x, # for math mode
+      include.rownames = FALSE,
+      caption.placement = "top",
+      file = "tex/table_detection.tex")
+
+         
