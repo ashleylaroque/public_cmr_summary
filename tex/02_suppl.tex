@@ -57,7 +57,7 @@
 
 \maketitle
 
-\section{Detection Model}
+\section*{Detection Model}
 
 Our capture-recapture data was collected seasonally and fish may be subject to different detection probabilities by season.
 As such, accounting for detection probabilities is essential to obtain reliable estimates of fish density.
@@ -77,10 +77,10 @@ Our primary interest was to estimate seasonal detection probabilities.
 We allowed $p_{j, t}$ to vary by season in a logit scale:
 
 \begin{equation}
-    \text{logit}~p_{j,t} = \mu_p + \alpha_p Q_{s[t]},
+    \text{logit}~p_{j,t} = \mu_p + \alpha_p Q_{t},
 \end{equation}
 
-where $Q_{s[t]}$ is a dummy variable discerning winter (coded as 0: November -- February) and summer (coded as 1: May -- August).
+where $Q_{t}$ is a dummy variable discerning winter (coded as 0: November -- February) and summer (coded as 1: May -- August).
 This formulation translates into the winter detection as $p_{\text{win}} = \text{inv.logit}(\mu_p)$ and the summer detection as $p_{\text{sum}} = \text{inv.logit}(\mu_p + \alpha_p)$
 
 % Our ability to detect individuals that have remained within the study section is partially dependent on seasonal changes such as day length and temperature.
@@ -152,7 +152,7 @@ When $X_{j, t+1}$ was unobserved (i.e., not recaptured), a predicted value was d
 
 The model was fitted to the data for each species separately using JAGS \citep{JAGSJustAnother}. Vague or weakly informative priors were used for parameters: $\text{Unif}(0, 1)$ for survival probability $s_{j,t}$, and $\text{Normal}(0, 10^2)$ for the seasonal effect $\alpha_p$ and the daily movement parameter $\ln \sigma_0$. Markov chain Monte Carlo (MCMC) simulations were run for 20,000 iterations with a 1,000 burn-in period and we retained 1,000 samples per chain by thinning every 40 steps to calculate posterior probabilities. Model convergence was checked by ensuring that the potential scale reduction factor, referred to as R-hat, was less than 1.1 for all parameters. All statistical analyses were conducted in R version 4.4.0 \citep{CoreTeam2020}. 
 
-Estimated detection probabilities were summarized in Table \ref{tab:detection}. We calculated the corrected density $N_{\text{cor}}$ as $N_{\text{cor}} = N_{\text{obs}}p_{\text{sum}}^{-1}$ for summer months and $N_{\text{cor}} = N_{\text{obs}}p_{\text{win}}^{-1}$ for winter months, where $N_{\text{obs}}$ is the observed fish density. $N_{\text{cor}}$ was used in our movement model in the main text.
+Estimated detection probabilities were summarized in Table \ref{tab:detection}. We calculated the corrected density $N_{\text{cor}}$ as $N_{\text{cor}} = N_{\text{obs}}p_{\text{sum}}^{-1}$ for summer months and $N_{\text{cor}} = N_{\text{obs}}p_{\text{win}}^{-1}$ for winter months, where $N_{\text{obs}}$ is the observed fish density. $N_{\text{cor}}$ was used as predictors in our movement model in the main text.
 
 \newpage
 
