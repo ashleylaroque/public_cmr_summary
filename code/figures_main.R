@@ -192,7 +192,7 @@ df_fig <- df_y %>%
                 labeller = labeller(species = species.labs)) +
     scale_color_manual(values=c("darkcyan", "maroon", "mediumpurple1", "steelblue3"),
                        name="Species") +
-    labs(x= "Length at Capture (mm)", y= "Absolute Movement (m/day)") +
+    labs(x= "ln Length at Capture (ln mm)", y= "Absolute Movement (m/day)") +
     theme(legend.position = "none",
           #text = element_text(size = 20),
           strip.text = element_text(color = 'white')))
