@@ -34,7 +34,8 @@ tab_size <- df_size_avg %>%
   kbl(format = "html",
       booktabs = TRUE,
       escape = FALSE,
-      digits = 2) %>% 
+      digits = 2,
+      col.names = c("Species", "Mean", "Standard Deviation")) %>% 
   kable_styling() %>% 
   save_kable("table_body_size.pdf")
 
@@ -59,7 +60,8 @@ df_den_avg %>%
   kbl(format = "html",
       booktabs = TRUE,
       escape = FALSE,
-      digits = 2) %>% 
+      digits = 2,
+      col.names = c("Species", "Mean", "Standard Deviation")) %>% 
   kable_styling() %>% 
   add_header_above(c(" " = 1, "Adjusted Density" = 2), align = "c") %>% 
   save_kable("table_den.pdf")
@@ -141,11 +143,12 @@ tab_hab <- df_h_sec %>%
                                       habitat_variable == "substrate_mean" ~ "Mean Substrate")) %>% 
   rename("Habitat Metric" = "habitat_variable") 
 
-tab_hab <- tab_hab %>% 
+tab_hab %>% 
   kbl(format = "html",
       booktabs = TRUE,
       escape = FALSE,
-      digits = 2) %>% 
+      digits = 2,
+      col.names = c("Habitat Metric", "Mean", "Standard Deviation")) %>% 
   kable_styling() %>% 
   save_kable("table_habitat.pdf")
 
