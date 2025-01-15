@@ -50,72 +50,17 @@
 
 \begin{document}
 
-%\renewcommand{\theequation}{S\arabic{equation}}
-%\renewcommand{\thetable}{S\arabic{table}}
-%\renewcommand{\thefigure}{S\arabic{figure}}
+\renewcommand{\theequation}{S\arabic{equation}}
+\renewcommand{\thetable}{S\arabic{table}}
+\renewcommand{\thefigure}{S\arabic{figure}}
 
 \maketitle
 
-\section*{Contents}
-
-\subsection*{Figures}
-
-Figure S1 Abundance of all captured fish species 
-Figure S2 Mean length at capture of tagged species
-Figure S3 Total movement by each species per season
-Figure S4 Habitat variable correlation
-
-\subsection*{Tables}
-
-Table S1
-Table S2
-Table S3
-
-\subsection*{Detection Model}
+\tableofcontents
 
 \newpage
 
-\begin{figure}
-    \centering
-    \includegraphics[width=0.8\linewidth]{output/fig_abundance.pdf}
-    \caption{}
-    \label{fig:fig_abundance}
-\end{figure}
-
-\newpage
-
-\begin{figure}
-    \centering
-    \includegraphics[width=0.8\linewidth]{output/fig_size_dist.pdf}
-    \caption{}
-    \label{fig:fig_size_dist}
-\end{figure}
-
-\newpage
-
-\begin{figure}
-    \centering
-    \includegraphics[width=0.8\linewidth]{output/fig_total_move.pdf}
-    \caption{}
-    \label{fig:fig_total_move}
-\end{figure}
-
-\newpage
-
-\begin{figure}
-    \centering
-    \includegraphics[width=0.8\linewidth]{output/fig_hab_corr.pdf}
-    \caption{}
-    \label{fig:fig_hab_corr}
-\end{figure}
-
-\newpage
-
-\input{tex/table_detection}
-
-\newpage
-
-\section*{Detection Model}
+\section{Detection Model}
 
 Our capture-recapture data was collected seasonally and fish may be subject to different detection probabilities by season.
 As such, accounting for detection probabilities is essential to obtain reliable estimates of fish density.
@@ -211,6 +156,74 @@ When $X_{j, t+1}$ was unobserved (i.e., not recaptured), a predicted value was d
 The model was fitted to the data for each species separately using JAGS \citep{plummerJAGSProgramAnalysis2003}. Vague or weakly informative priors were used for parameters: $\text{Unif}(0, 1)$ for survival probability $s_{j,t}$, and $\text{Normal}(0, 10^2)$ for the seasonal effect $\alpha_p$ and the daily movement parameter $\ln \sigma_0$. Markov chain Monte Carlo (MCMC) simulations were run for 20,000 iterations with a 1,000 burn-in period and we retained 1,000 samples per chain by thinning every 40 steps to calculate posterior probabilities. Model convergence was checked by ensuring that the potential scale reduction factor, referred to as R-hat, was less than 1.1 for all parameters. All statistical analyses were conducted in R version 4.4.0 \citep{rcoreteamLanguageEnvironmentStatistical2021}. 
 
 Estimated detection probabilities were summarized in Table \ref{tab:detection}. We calculated the corrected density $N_{\text{cor}}$ as $N_{\text{cor}} = N_{\text{obs}}p_{\text{sum}}^{-1}$ for summer months and $N_{\text{cor}} = N_{\text{obs}}p_{\text{win}}^{-1}$ for winter months, where $N_{\text{obs}}$ is the observed fish density. $N_{\text{cor}}$ was used as predictors in our movement model in the main text.
+
+\newpage
+
+\section{Figures}
+
+\subsection{Figure S1 Abundance of all captured fish species}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{output/fig_abundance.pdf}
+    \caption{}
+    \label{fig:fig_abundance}
+\end{figure}
+
+\newpage
+
+\subsection{Figure S2 Mean length at capture of tagged species}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{output/fig_size_dist.pdf}
+    \caption{}
+    \label{fig:fig_size_dist}
+\end{figure}
+
+\newpage
+
+\subsection{Figure S3 Total movement by each species per season}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{output/fig_total_move.pdf}
+    \caption{}
+    \label{fig:fig_total_move}
+\end{figure}
+
+\newpage
+
+\section{Tables}
+
+\subsection{Table S1 Mean and standard deviation of total length}
+
+\input{tex/table_size}
+
+\newpage
+\subsection{Table S2 Mean and standard deviation of species density}
+
+\input{tex/table_density}
+
+\newpage
+\subsection{Table S3 Number of unique and replicate capture and recaptures}
+
+\input{tex/table_capture}
+
+\newpage
+\subsection{Table S4 Movement model coefficients}
+
+\input{tex/table_coefficients}
+
+\newpage
+\subsection{Table S5 Mean and standard deviation of habitat variables}
+
+\input{tex/table_habitat}
+
+\newpage
+\subsection{Table S6 Seasonal detection probabilities}
+
+\input{tex/table_detection}
 
 \newpage
 
