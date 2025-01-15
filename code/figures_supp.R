@@ -21,6 +21,31 @@ df_combined <- readRDS("data_formatted/data_combined.rds") %>%
                         "green_sunfish",
                         "redbreast_sunfish"))
 
+# Set theme ---------------------------------------------------------------
+
+## plot theme
+plt_theme <- theme_bw() + theme(
+  plot.background = element_blank(),
+  
+  panel.background = element_rect(grey(0.99)),
+  panel.border = element_rect(),
+  
+  panel.grid = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  
+  panel.grid.major.x = element_blank(),
+  panel.grid.major.y = element_blank(),
+  panel.grid.minor.x = element_blank(),
+  panel.grid.minor.y = element_blank(),
+  
+  strip.background = element_blank(),
+  strip.text.x = element_text(size = 15),
+  strip.text.y = element_text(size = 15),
+  axis.title = element_text(size = 15))
+
+theme_set(plt_theme)
+
 # Histogram of recaps by species ------------------------------------------
 
 df_cmr %>% 
@@ -30,7 +55,8 @@ df_cmr %>%
   scale_fill_manual(values = alpha(c("gray", "steelblue3"))) +
   geom_bar() +
   theme_minimal() +
-  facet_wrap(~species)
+  facet_wrap(~species) +
+  theme_set(plt_theme)
 
 
 # Abundance of all captured species ---------------------------------------
@@ -41,8 +67,8 @@ fig_abundance <- df_n %>%
   ungroup() %>%
   ggplot(aes(reorder(species, -n), n)) +
   geom_col() +
-  theme(axis.text.x = element_text(angle = 45, vjust = .5),
-        text = element_text(size = 15)) +
+  theme_set(plt_theme) +
+  theme(axis.text.x = element_text(size = 12, angle = 45, vjust = .5)) +
   xlab("Species") +
   ylab("Abundance")
 
@@ -65,8 +91,9 @@ ggsave(fig_abundance,
 fig_size_dist <- ggplot(df_combined, aes(species, length0, fill = species)) +
   geom_boxplot() +
   scale_fill_manual(values=c("darkcyan", "maroon", "mediumpurple1", "steelblue3"))+
+  theme_set(plt_theme) +
   theme(legend.position = "none",
-        text = element_text(size = 15)) +
+        axis.text.x = element_text(size = 12)) +
   xlab("Species") +
   ylab("Length (mm)")
 
@@ -96,10 +123,12 @@ names(species.labs) <- c("bluehead_chub", "creek_chub", "green_sunfish", "redbre
 season.labs <- c("0" = "Winter", "1" = "Summer")
 fig_total_move <- gghistogram(df_combined, x= "abs_move", fill = "#20A387FF",
             xlab = "Distance (m)", ylab = "Frequency", binwidth = 10) +
-  theme(text = element_text(size = 15)) +
   facet_grid(season ~ species, 
               scales = "free",
-              labeller = labeller(species = species.labs, season = season.labs))
+              labeller = labeller(species = species.labs, season = season.labs)) +
+  theme_set(plt_theme) +
+  theme(axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12))
 
 ggsave(fig_total_move, 
        filename = "output/fig_total_move.pdf",

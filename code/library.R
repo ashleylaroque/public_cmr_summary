@@ -12,7 +12,7 @@ pacman::p_load(tidyverse,
                kableExtra,
                ggfortify,
                xtable,
-               webshot2)
+               reporter)
 
 
 # sessionInfo() to extract version etc
