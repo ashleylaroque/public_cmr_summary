@@ -110,8 +110,8 @@ dat_fig <- df_output %>%
   scale_color_manual(values = c("gray", "steelblue3")) + 
   labs(y = NULL,
        x = "Estimate") +
+    theme_set(plt_theme) +
   theme(legend.position = "none") +
-  theme_set(plt_theme) +
   facet_wrap( ~ species, nrow = 2, ncol = 2, 
               labeller = labeller(species = species.labs)))
 
