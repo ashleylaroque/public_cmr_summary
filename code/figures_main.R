@@ -57,9 +57,11 @@ plt_theme <- theme_bw() + theme(
   panel.grid.minor.y = element_blank(),
   
   strip.background = element_blank(),
-  strip.text.x = element_text(size = 15),
-  strip.text.y = element_text(size = 15),
-  axis.title = element_text(size = 15))
+  strip.text.x = element_text(size = 16),
+  strip.text.y = element_text(size = 16),
+  axis.title = element_text(size = 16),
+  axis.text.x = element_text(size = 13),
+  axis.text.y = element_text(size = 13))
 
 theme_set(plt_theme)
 
@@ -109,6 +111,7 @@ dat_fig <- df_output %>%
   labs(y = NULL,
        x = "Estimate") +
   theme(legend.position = "none") +
+  theme_set(plt_theme) +
   facet_wrap( ~ species, nrow = 2, ncol = 2, 
               labeller = labeller(species = species.labs)))
 
@@ -193,9 +196,9 @@ df_fig <- df_y %>%
     scale_color_manual(values=c("darkcyan", "maroon", "mediumpurple1", "steelblue3"),
                        name="Species") +
     labs(x= "ln Length at Capture (ln mm)", y= "Absolute Movement (m/day)") +
+    theme_set(plt_theme) +
     theme(legend.position = "none",
-          #text = element_text(size = 20),
-          strip.text = element_text(color = 'white')))
+          strip.text = element_text(color = 'white'))) 
 
 ggsave(fig_size,
        filename = "output/fig_size.pdf",
@@ -238,9 +241,8 @@ ggsave(fig_size,
                       name = "species") +
    labs(x= expression("Density (n /"~m^2*")"),
         y= "Absolute Movement (m / day)") +
+   theme_set(plt_theme) +
    theme(legend.position = "none",
-         text = element_text(size = 15),
-         plot.title = element_text(hjust = 0.5, size = 20),
          strip.background = element_rect(color = "black"),
          strip.text = element_text(color = 'white'),
          strip.placement = "outside"))
