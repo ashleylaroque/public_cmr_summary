@@ -62,7 +62,7 @@ tab_den <- df_combined %>%
 
 ## export
 print(xtable(tab_den,
-             caption = "Mean and standard deviation density (n / {supsc('2')}) of each each target species.",
+             caption = "Mean and standard deviation density (n /m^2) of each each target species.",
              label = "tab:density"),
       tabular.environment = "tabular", # use \begin{tabular}
       sanitize.text.function = function(x) x, # for math mode
@@ -101,17 +101,18 @@ print(xtable(tab_cap,
 tab_coef <- df_est %>% 
   select(species, para, lower95, upper95, median) %>% 
   rename("Effect" = "para",
-         "Lower 95% CI" = "lower95",
-         "Upper 95% CI" = "upper95",
+         "Lower 95\\% CI" = "lower95",
+         "Upper 95\\% CI" = "upper95",
          "Species" = "species",
          "Estimate" = "median") %>% 
   mutate(Species = str_to_sentence(Species) %>% 
          str_replace("_", " ")) %>% 
-  mutate(Species = ifelse(duplicated(Species), NA, Species))
+  ungroup() %>% 
+  mutate(Species = ifelse(duplicated(Species), NA, Species)) 
 
 ## export
 print(xtable(tab_coef,
-             caption = "Parameter estimates of the movement model. Median estimates and their associated 95% credible intervals (95% CI) are reported.",
+             caption = "Parameter estimates of the movement model. Median estimates and their associated 95\\% credible intervals (95\\% CI) are reported.",
              label = "tab:coefficients"),
       tabular.environment = "tabular", # use \begin{tabular}
       sanitize.text.function = function(x) x, # for math mode
