@@ -3,10 +3,6 @@
 **Title**: Body size and local density explain movement patterns in
 stream fish
 
-**Authors**: LaRoque A, Kim S, Terui A
-
-**Journal**: Proceedings of the Royal Society B
-
 # Analysis
 
 ## Movement Analysis
