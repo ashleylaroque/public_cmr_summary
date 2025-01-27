@@ -1,4 +1,4 @@
-# Adapted from Seog Kim's code
+
 # Format water water level data
 
 # setup -------------------------------------------------------------------

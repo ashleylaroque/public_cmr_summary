@@ -1,4 +1,4 @@
-#' Author: Ashley LaRoque, Akira Terui
+
 #' Description:
 #' This script format habitat data from the North Campus
 #' at the University of North Carolina Greensboro.

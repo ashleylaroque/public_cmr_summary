@@ -1,4 +1,4 @@
-#' Author: Ashley LaRoque, Akira Terui
+
 #' Description:
 #' This script runs modified CJS model for predicting movement with density and body size
 

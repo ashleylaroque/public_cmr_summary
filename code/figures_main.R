@@ -1,5 +1,4 @@
-# R version 4.3.1
-# Ashley LaRoque
+
 
 rm(list = ls())
 
